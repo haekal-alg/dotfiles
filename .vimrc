@@ -61,22 +61,30 @@ let &t_EI = "\<Esc>[2 q"
 " gets annoying, swap for `set pastetoggle=<F2>` instead.
 set paste
 
-" Send yanked text into tmux's paste buffer so `prefix + p` in tmux pastes
-" whatever was last yanked in vim — bridges vim's registers and tmux's
-" buffer without touching the Windows clipboard (clip.exe/PowerShell
-" Get-Clipboard round-trip was tested and is unreliable on this machine).
+" Send yanked/deleted text into tmux's paste buffer so `prefix + p` in tmux
+" pastes whatever was last put in a register in vim — bridges vim's
+" registers and tmux's buffer without touching the Windows clipboard
+" (clip.exe/PowerShell Get-Clipboard round-trip was tested and is unreliable
+" on this machine). Covers y/d/c, not just y: TextYankPost also fires for
+" delete and change (dd/cc/etc. fill the unnamed register too), and the
+" pull-before-paste hook below overwrites the unnamed register from the
+" Windows clipboard on every p/P — if a delete didn't reach the Windows
+" clipboard here, that pull would clobber it right before pasting.
+" Reads @" (unnamed), not @0: register 0 only holds the last true yank and
+" is untouched by delete/change, so @0 would silently miss every dd/cc.
 if exists('$TMUX')
   augroup TmuxYankBridge
     autocmd!
-    autocmd TextYankPost * if v:event.operator ==# 'y' | call system('tmux load-buffer -', @0) | endif
+    autocmd TextYankPost * if v:event.operator =~# '[ydc]' | call system('tmux load-buffer -', @") | endif
   augroup END
 endif
 
-" Also push vim yanks straight to the Windows clipboard (win32yank), not
-" just tmux's buffer, so a vim yank is pastable in the browser/other
-" Windows apps too. Gated on WSL, not $TMUX, so it works outside tmux too.
-" Read side (paste) needs its own hook below since TextYankPost only fires
-" on yank, not put.
+" Also push vim yanks/deletes straight to the Windows clipboard (win32yank),
+" not just tmux's buffer, so a vim yank or dd is pastable in the
+" browser/other Windows apps too — and so the pull-before-paste hook below
+" round-trips the correct content instead of stale clipboard data. Gated on
+" WSL, not $TMUX, so it works outside tmux too. Read side (paste) needs its
+" own hook below since TextYankPost only fires on yank/delete/change, not put.
 " NOTE: win32yank.exe must live on the NTFS-backed /mnt/c filesystem, not
 " the WSL/ext4 side — launched via WSL interop from an ext4 path it fails
 " clipboard access with OS error 5 (no window-station attachment); from
@@ -87,11 +95,11 @@ endif
 let s:win32yank = get(glob('/mnt/c/Users/*/.local/bin/win32yank.exe', 0, 1), 0, '')
 if exists('$WSL_DISTRO_NAME')
   function! s:PushWinClipboard()
-    call system(s:win32yank . ' -i --crlf', @0)
+    call system(s:win32yank . ' -i --crlf', @")
   endfunction
   augroup WinClipboardYankBridge
     autocmd!
-    autocmd TextYankPost * if v:event.operator ==# 'y' | call s:PushWinClipboard() | endif
+    autocmd TextYankPost * if v:event.operator =~# '[ydc]' | call s:PushWinClipboard() | endif
   augroup END
 endif
 
