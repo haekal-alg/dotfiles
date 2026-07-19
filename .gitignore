@@ -1,0 +1,17 @@
+# Agent-facing context, not meant for the repo's public history
+CLAUDE.md
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor swap/backup files
+*.swp
+*.swo
+*~
+
+# Backup copies from ONBOARDING.md's "back up existing dotfiles" step,
+# in case they ever land inside the repo dir instead of $HOME
+.tmux.conf.bak
+.vimrc.bak
+.tmux/cheatsheet.sh.bak
