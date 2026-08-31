@@ -1,0 +1,435 @@
+<title>PRD — Subject</title>
+<style>
+  :root {
+    --canvas:#ffffff;
+    --canvas-subtle:#f6f8fa;
+    --canvas-inset:#eef1f4;
+    --fg:#1f2328;
+    --fg-muted:#59636e;
+    --fg-subtle:#818b98;
+    --border:#d1d9e0;
+    --border-muted:#e4e8ec;
+    --link:#0969da;
+    --brand:#0f5f63;
+    --brand-soft:#e4eeee;
+    --success:#1a7f37;      --success-bg:#dafbe1;  --success-br:#aceebb;
+    --attention:#9a6700;    --attention-bg:#fff8c5; --attention-br:#f0e08a;
+    --danger:#cf222e;       --danger-bg:#ffebe9;   --danger-br:#ffcecb;
+    --done:#8250df;         --done-bg:#fbefff;     --done-br:#e5cdfa;
+    --neutral-bg:#eef1f4;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  /* Deliberately single-theme: this is a print-and-share document styled after a
+     GitHub README in light mode. The viewer's dark toggle must not repaint it. */
+  :root[data-theme="dark"], :root[data-theme="light"] {
+    --canvas:#ffffff; --canvas-subtle:#f6f8fa; --canvas-inset:#eef1f4;
+    --fg:#1f2328; --fg-muted:#59636e; --fg-subtle:#818b98;
+    --border:#d1d9e0; --border-muted:#e4e8ec;
+    --link:#0969da; --brand:#0f5f63; --brand-soft:#e4eeee;
+    --success:#1a7f37; --success-bg:#dafbe1; --success-br:#aceebb;
+    --attention:#9a6700; --attention-bg:#fff8c5; --attention-br:#f0e08a;
+    --danger:#cf222e; --danger-bg:#ffebe9; --danger-br:#ffcecb;
+    --done:#8250df; --done-bg:#fbefff; --done-br:#e5cdfa;
+    --neutral-bg:#eef1f4;
+  }
+  :root { color-scheme: light; }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--canvas); color:var(--fg);
+    font-family:var(--sans); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page { max-width:960px; margin:0 auto; padding:40px 24px 120px; }
+
+  h1, h2, h3, h4 { font-weight:600; line-height:1.25; text-wrap:balance; margin:0; }
+  h1 { font-size:clamp(26px,4vw,34px); letter-spacing:-.02em; padding-bottom:12px; border-bottom:1px solid var(--border-muted); }
+  h2 {
+    font-size:24px; letter-spacing:-.01em; margin:56px 0 16px;
+    padding-bottom:9px; border-bottom:1px solid var(--border-muted);
+  }
+  h3 { font-size:19px; margin:32px 0 10px; }
+  h4 { font-size:16px; margin:24px 0 8px; }
+  h2 .hn, h3 .hn { color:var(--fg-subtle); font-family:var(--mono); font-size:.72em; font-weight:500; margin-right:.5em; }
+  p { margin:0 0 14px; }
+  ul, ol { margin:0 0 14px; padding-left:26px; }
+  li { margin-bottom:6px; }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  a:focus-visible { outline:2px solid var(--link); outline-offset:2px; border-radius:3px; }
+  strong { font-weight:600; }
+  code {
+    font-family:var(--mono); font-size:85%; background:var(--canvas-inset);
+    padding:.15em .4em; border-radius:6px;
+  }
+  hr { border:none; border-top:1px solid var(--border-muted); margin:48px 0; }
+
+  /* ---------- masthead ---------- */
+  .eyebrow {
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--brand); margin:0 0 10px; font-weight:600;
+  }
+  .lede { font-size:18px; color:var(--fg-muted); margin:16px 0 0; }
+  .meta {
+    display:flex; flex-wrap:wrap; gap:6px 10px; margin:22px 0 0; padding:0; list-style:none;
+  }
+  .meta li {
+    font-family:var(--mono); font-size:12px; color:var(--fg-muted); margin:0;
+    background:var(--canvas-subtle); border:1px solid var(--border-muted);
+    border-radius:6px; padding:4px 9px;
+  }
+  .meta li b { color:var(--fg); font-weight:600; }
+
+  /* ---------- github-style alerts ---------- */
+  .alert { border-left:4px solid; padding:12px 16px; margin:20px 0; border-radius:0 6px 6px 0; }
+  .alert > .t {
+    display:flex; align-items:center; gap:8px; font-weight:600; font-size:14px;
+    letter-spacing:.01em; margin-bottom:6px;
+  }
+  .alert p:last-child, .alert ul:last-child { margin-bottom:0; }
+  .alert.note      { border-color:var(--link);      background:#ddf4ff40; }
+  .alert.note .t   { color:var(--link); }
+  .alert.tip       { border-color:var(--success);   background:var(--success-bg); }
+  .alert.tip .t    { color:var(--success); }
+  .alert.important { border-color:var(--done);      background:var(--done-bg); }
+  .alert.important .t { color:var(--done); }
+  .alert.warning   { border-color:var(--attention); background:var(--attention-bg); }
+  .alert.warning .t{ color:var(--attention); }
+  .alert.caution   { border-color:var(--danger);    background:var(--danger-bg); }
+  .alert.caution .t{ color:var(--danger); }
+  .ico { width:16px; height:16px; flex:none; }
+
+  /* ---------- tables ---------- */
+  .tw { overflow-x:auto; margin:18px 0 22px; border:1px solid var(--border); border-radius:8px; }
+  table { border-collapse:collapse; width:100%; font-size:14.5px; }
+  th, td { text-align:left; padding:9px 13px; border-bottom:1px solid var(--border-muted); vertical-align:top; }
+  th {
+    background:var(--canvas-subtle); font-weight:600; font-size:12.5px;
+    letter-spacing:.02em; color:var(--fg); white-space:nowrap;
+  }
+  tbody tr:nth-child(even) td { background:#fbfcfd; }
+  tbody tr:last-child td { border-bottom:none; }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; font-family:var(--mono); white-space:nowrap; }
+  td.k { font-family:var(--mono); font-size:13px; white-space:nowrap; }
+  caption { caption-side:bottom; text-align:left; padding:10px 13px; font-size:13px; color:var(--fg-subtle); background:var(--canvas-subtle); border-top:1px solid var(--border-muted); }
+
+  /* ---------- pills ---------- */
+  .pill {
+    display:inline-block; font-family:var(--mono); font-size:11px; font-weight:600;
+    letter-spacing:.03em; padding:2px 8px; border-radius:999px; white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .pill.ok    { background:var(--success-bg);  color:var(--success);  border-color:var(--success-br); }
+  .pill.no    { background:var(--danger-bg);   color:var(--danger);   border-color:var(--danger-br); }
+  .pill.unk   { background:var(--attention-bg);color:var(--attention);border-color:var(--attention-br); }
+  .pill.dec   { background:var(--done-bg);     color:var(--done);     border-color:var(--done-br); }
+  .pill.flat  { background:var(--neutral-bg);  color:var(--fg-muted); border-color:var(--border); }
+  .pill.brand { background:var(--brand-soft);  color:var(--brand);    border-color:#cfe0e0; }
+
+  /* ---------- toc ---------- */
+  nav.toc {
+    border:1px solid var(--border); border-radius:8px; background:var(--canvas-subtle);
+    padding:16px 20px; margin:28px 0 0;
+  }
+  nav.toc h2 {
+    font-size:13px; font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase;
+    color:var(--fg-muted); border:none; margin:0 0 10px; padding:0;
+  }
+  nav.toc ol { list-style:none; padding:0; margin:0; columns:2; column-gap:32px; }
+  nav.toc li { margin:0 0 7px; font-size:14.5px; break-inside:avoid; max-width:none; }
+  nav.toc .hn { font-family:var(--mono); font-size:12.5px; color:var(--fg-subtle); margin-right:8px; }
+  @media (max-width:640px) { nav.toc ol { columns:1; } }
+
+  /* ---------- cards ---------- */
+  .cards { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin:22px 0; }
+  .card { border:1px solid var(--border); border-radius:8px; padding:18px 20px; background:var(--canvas); }
+  .card .ct { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .card .cv { font-family:var(--mono); font-size:12px; color:var(--fg-subtle); }
+  .card h3 { margin:0 0 8px; font-size:18px; }
+  .card p { font-size:14.5px; color:var(--fg-muted); margin:0 0 10px; max-width:none; }
+  .card dl { margin:12px 0 0; font-size:14px; display:grid; grid-template-columns:auto 1fr; gap:4px 12px; }
+  .card dt { color:var(--fg-subtle); font-family:var(--mono); font-size:12px; padding-top:2px; }
+  .card dd { margin:0; }
+
+  /* ---------- diagram ---------- */
+  figure { margin:22px 0; }
+  figure .fw { overflow-x:auto; border:1px solid var(--border); border-radius:8px; background:var(--canvas-subtle); padding:14px; }
+  figcaption { font-size:13px; color:var(--fg-subtle); margin-top:8px; }
+  pre.mermaid { margin:0; text-align:center; }
+
+  /* ---------- score chart ---------- */
+  .chart { border:1px solid var(--border); border-radius:8px; padding:18px 20px 14px; margin:22px 0; }
+  .chart .ch-t { font-size:15px; font-weight:600; margin-bottom:2px; }
+  .chart .ch-s { font-size:13px; color:var(--fg-subtle); margin-bottom:16px; }
+  .plot { position:relative; display:grid; gap:10px; }
+  /* track geometry: 170px label + 12px gap | track | 12px gap + 92px value */
+  .thrline {
+    position:absolute; top:-4px; bottom:-4px; width:0; border-left:2px dashed var(--danger);
+    left:calc(182px + (100% - 286px) * 0.857); pointer-events:none;
+  }
+  .row { display:grid; grid-template-columns:170px 1fr 92px; align-items:center; gap:12px; font-size:13.5px; }
+  .row .lb { color:var(--fg-muted); }
+  .row .lb b { color:var(--fg); font-weight:600; display:block; font-size:13.5px; }
+  .row .lb span { font-family:var(--mono); font-size:11.5px; color:var(--fg-subtle); }
+  .track { position:relative; height:22px; background:var(--canvas-inset); border-radius:4px; overflow:hidden; }
+  .bar { position:absolute; inset:0 auto 0 0; background:var(--brand); border-radius:0 4px 4px 0; }
+  .bar.crit { background:var(--danger); }
+  .row .val { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:13px; text-align:right; color:var(--fg-muted); }
+  .row .val b { color:var(--fg); }
+  .thr { position:relative; margin-top:10px; height:16px; }
+  .thr .lab {
+    position:absolute; transform:translateX(-50%); font-family:var(--mono); font-size:11px;
+    color:var(--danger); white-space:nowrap; top:0;
+    left:calc(182px + (100% - 286px) * 0.857);
+  }
+  .plotwrap { position:relative; }
+
+  /* ---------- checklists ---------- */
+  ul.check { list-style:none; padding:0; margin:14px 0 18px; }
+  ul.check li {
+    position:relative; padding:0 0 0 30px; margin-bottom:10px; font-size:15px;
+  }
+  ul.check li::before {
+    content:""; position:absolute; left:0; top:3px; width:16px; height:16px;
+    border:1px solid var(--border); border-radius:3px; background:var(--canvas);
+  }
+  ul.check li b { font-weight:600; }
+  ul.check li .g { font-family:var(--mono); font-size:11.5px; color:var(--brand); text-transform:uppercase; letter-spacing:.06em; }
+
+  /* ---------- phase list ---------- */
+  .phase { border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:18px 0 22px; }
+  .phase .ph { display:grid; grid-template-columns:118px 1fr 116px; gap:14px; padding:11px 14px; border-bottom:1px solid var(--border-muted); align-items:baseline; }
+  .phase .ph:last-child { border-bottom:none; }
+  .phase .ph:nth-child(even) { background:#fbfcfd; }
+  .phase .ph .pn { font-family:var(--mono); font-size:12.5px; color:var(--fg-muted); }
+  .phase .ph .pb b { display:block; font-size:15px; font-weight:600; }
+  .phase .ph .pb span { font-size:14px; color:var(--fg-muted); }
+  .phase .ph .px { text-align:right; }
+  .marker { background:var(--brand-soft); border-bottom:1px solid var(--border-muted); padding:9px 14px; font-size:13.5px; color:var(--brand); font-weight:600; }
+  .marker.stop { background:var(--danger-bg); color:var(--danger); }
+  .phase .ph .pb span.pm {
+    display:block; margin-top:6px; font-family:var(--mono); font-size:11.5px;
+    color:var(--fg-subtle); line-height:1.6;
+  }
+  .phase .ph .pb span.pm b { color:var(--fg-muted); font-weight:600; }
+  .phase .ph .pb span.pm code { font-size:11px; }
+
+  .footer { margin-top:56px; padding-top:18px; border-top:1px solid var(--border-muted); font-size:13.5px; color:var(--fg-subtle); }
+  @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+  @media (max-width:640px) {
+    .row { grid-template-columns:1fr; gap:4px; }
+    .row .val { text-align:left; }
+    .thr, .thrline { display:none; }
+    .phase .ph { grid-template-columns:1fr; gap:4px; }
+    .phase .ph .px { text-align:left; }
+  }
+</style>
+<!--
+  =========================================================================
+  PRD SKELETON — copy this file, replace the demo content, keep the styles.
+  Publish with the Artifact tool. Do NOT add doctype / html / head / body
+  wrapper tags — the harness supplies them. The title tag below names the tab.
+  Every component below is DEMONSTRATED once. Delete what you do not use.
+  =========================================================================
+-->
+
+<div class="page">
+
+  <header>
+    <p class="eyebrow">ORG · Product requirements · Revision 1</p>
+    <h1>Plain-language title, not the codename</h1>
+    <p class="lede">
+      Two or three sentences. What this proposes and who it is for. No jargon.
+    </p>
+    <ul class="meta">
+      <li><b>Date</b> 1 January 2026</li>
+      <li><b>Shipped today</b> 1.5.0</li>
+      <li><b>Target</b> 1.6.0 · 1.7.0</li>
+      <li><b>Status</b> specs written, nothing built</li>
+      <li><b>Blockers</b> 1 (hard)</li>
+      <li><b>Sizing</b> complexity, not calendar</li>
+    </ul>
+  </header>
+
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><span class="hn">1</span><a href="#summary">Executive summary</a></li>
+      <li><span class="hn">2</span><a href="#flow">How the information flows</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="summary"><span class="hn">1</span>Executive summary</h2>
+
+  <!-- FEATURE CARDS: one per proposed feature. Pill = readiness. -->
+  <div class="cards">
+    <div class="card">
+      <div class="ct">
+        <span class="cv">Feature A · v1.6.0</span>
+        <span class="pill ok">ready to build</span>
+      </div>
+      <h3>Feature name in plain words</h3>
+      <p>What it does, for whom, in two sentences.</p>
+      <dl>
+        <dt>Catches</dt><dd>The concrete things it finds</dd>
+        <dt>Where</dt><dd>Which part of the product changes</dd>
+        <dt>Order</dt><dd>Built second</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- TABLE: always wrapped in .tw so it scrolls instead of breaking the page. -->
+  <div class="tw">
+    <table>
+      <thead><tr><th>Thing</th><th class="n">Figure</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td>Row label</td><td class="n">7,200+</td><td>What the reader should take from it</td></tr>
+        <tr><td class="k">code_style_cell</td><td class="n">0</td><td>Use class="n" for numbers, class="k" for identifiers</td></tr>
+      </tbody>
+      <caption>Provenance line. Always say where the numbers came from.</caption>
+    </table>
+  </div>
+
+  <!-- ID-TAGGED CONCRETE LIST: every rule/detection/check gets a stable ID (R1, D2, …)
+       reused verbatim in this table, in the phase that ships it (.pm line below), and in
+       the acceptance test that exercises it (§7-equivalent). Never renumber an ID after
+       it ships; if one is cut, say so and let it disappear rather than shrinking the rest. -->
+  <div class="tw">
+    <table>
+      <thead><tr><th class="n">ID</th><th>Rule</th><th>Fires on</th><th>Honest reach</th></tr></thead>
+      <tbody>
+        <tr><td class="n"><b>R1</b></td><td>Name of the rule</td><td>The concrete condition</td><td>What it cannot tell you — every row needs one, not just a caveats section at the end</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PILL GALLERY: the full set, with the meaning each one carries.
+       Getting these wrong is the fastest way to mislead a skim-reader. -->
+  <p>
+    <span class="pill ok">have</span>
+    <span class="pill ok">not needed</span>
+    <span class="pill no">don't have</span>
+    <span class="pill no">blocking</span>
+    <span class="pill unk">unknown</span>
+    <span class="pill unk">partial</span>
+    <span class="pill dec">taken</span>
+    <span class="pill flat">trivial</span>
+    <span class="pill brand">note</span>
+  </p>
+
+  <!-- A CLOSED QUESTION keeps its row. Strike it, do not delete it. -->
+  <div class="tw">
+    <table>
+      <thead><tr><th class="n">#</th><th>Question</th><th>Why it is yours</th><th>Where it stands</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td><s>The question that got answered</s></td><td>It was a credential someone held, not a problem we could engineer around</td><td><span class="pill ok">closed</span> What closed it, and on what date</td></tr>
+        <tr><td class="n">2</td><td>A question still open</td><td>A commercial expectation, not a technical constraint</td><td><span class="pill no">now the most important open question</span> What it costs to leave unanswered</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ALERTS: note (context) · tip (good news) · important (decision) ·
+       warning (limitation) · caution (danger / unresolved). Icons are GitHub Octicons. -->
+  <div class="alert note">
+    <div class="t"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>In plain terms</div>
+    <p style="margin-bottom:0">The one-paragraph analogy that makes a technical idea land.</p>
+  </div>
+
+  <div class="alert tip">
+    <div class="t"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>Resolved on DATE</div>
+    <p style="margin-bottom:0">What was blocked, what cleared it, what that changed.</p>
+  </div>
+
+  <div class="alert important">
+    <div class="t"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm7 2.25a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm.75 2.25h.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 .25-.75Z"/></svg>A decision, and the condition attached to it</div>
+    <p style="margin-bottom:0">Decisions the reader must not silently inherit.</p>
+  </div>
+
+  <div class="alert warning">
+    <div class="t"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>A limit, stated before a customer finds it</div>
+    <p style="margin-bottom:0">One warning box per honest limitation. Never fewer than the real count.</p>
+  </div>
+
+  <div class="alert caution">
+    <div class="t"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.141.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>The blocker, or something that must not be missed</div>
+    <p style="margin-bottom:0">Top of the summary while live. Replaced by a tip box when cleared — never deleted.</p>
+  </div>
+
+  <h2 id="flow"><span class="hn">2</span>How the information flows</h2>
+
+  <!-- MERMAID: rendered natively by the Artifact host. No external library. -->
+  <figure>
+    <div class="fw">
+<pre class="mermaid">
+%%{init:{"theme":"neutral","flowchart":{"curve":"linear","nodeSpacing":42,"rankSpacing":52}}}%%
+flowchart LR
+  subgraph EP["Where the work happens"]
+    direction TB
+    A["Step one"] --> B["Step two"]
+  end
+  B --> C["Result"]
+  C -.-> D["Future: out of scope"]
+</pre>
+    </div>
+    <figcaption>Say what the dashed box means and why it is out of scope.</figcaption>
+  </figure>
+
+  <!-- PHASE LIST: complexity pills, never day estimates. .marker = a gate.
+       Phase numbers must match the source spec's tasks.md exactly — say so in the
+       paragraph above the block, so a phase named here is provably the same phase
+       named there. Each .pb carries a span.pm: a monospace metadata line, bolded
+       labels, taken line for line from that phase's tasks.md entry — never invented.
+       Use whichever labels actually apply: Crate/Index, Config key/Objects, Target
+       host (with address), Files, Verify (a real command), Commit (the exact message). -->
+  <div class="phase">
+    <div class="marker">Done DATE &rarr; work starts at phase 1</div>
+    <div class="ph">
+      <div class="pn">Phase 0</div>
+      <div class="pb"><b>Preconditions</b> <span class="pill ok">done</span><span>What it proves and what it can invalidate</span>
+        <span class="pm"><b>Measured</b> the number that proves it · <b>Method</b> where that check is recorded</span></div>
+      <div class="px"><span class="pill unk">research</span></div>
+    </div>
+    <div class="marker stop">Stop here &rarr; nothing below starts until X arrives</div>
+    <div class="ph">
+      <div class="pn">Phase 1</div>
+      <div class="pb"><b>First build step</b><span>One sentence — introduces <b>R1</b>, matching the ID used in the rule table above and the acceptance test that exercises it</span>
+        <span class="pm"><b>Crate</b> <code>name-of-crate</code>, added to the workspace members list · <b>Config</b> new <code>section:</code> key in <code>config/agent.yml</code> · <b>Commit</b> <code>feat(crate): short imperative summary</code></span></div>
+      <div class="px"><span class="pill flat">trivial</span></div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST: for acceptance tests. -->
+  <ul class="check">
+    <li><span class="g">given</span> <b>a starting condition</b>, when the thing happens, then the observable result appears exactly once.</li>
+  </ul>
+
+  <!-- SCORE CHART: only when comparing values against one threshold.
+       Geometry: 170px label + 12px gap | track | 12px gap + 92px value.
+       The 0.857 in the calc() is threshold/max — recompute it if either changes. -->
+  <div class="chart">
+    <div class="ch-t">Chart title</div>
+    <div class="ch-s">What is being compared, and against what line</div>
+    <div class="plotwrap">
+      <div class="plot">
+        <div class="thrline"></div>
+        <div class="row">
+          <div class="lb"><b>Entity name</b><span>qualifier</span></div>
+          <div class="track"><div class="bar crit" style="width:72%"></div></div>
+          <div class="val"><b>72</b> / 100</div>
+        </div>
+        <div class="row">
+          <div class="lb"><b>Another</b><span>qualifier</span></div>
+          <div class="track"><div class="bar" style="width:34%"></div></div>
+          <div class="val"><b>34</b> / 100</div>
+        </div>
+      </div>
+      <div class="thr"><div class="lab">threshold 60</div></div>
+    </div>
+  </div>
+
+  <p class="footer">
+    Provenance footer: what was measured, what was read, what remains assumed.
+  </p>
+
+</div>
