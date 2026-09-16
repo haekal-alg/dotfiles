@@ -36,9 +36,11 @@ ${b}Session${n}
  d        Detach client
  s        List sessions
  \$        Rename session
+ New session: tmux new -s <name>
+ (run from a shell, outside tmux)
 
-     Esc to close
+     Esc or q to close
 EOF
 while IFS= read -rsn1 key; do
-    [ "$key" = $'\x1b' ] && break
+    [ "$key" = $'\x1b' ] || [ "$key" = "q" ] && break
 done
