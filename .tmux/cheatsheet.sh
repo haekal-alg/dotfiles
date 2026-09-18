@@ -18,6 +18,7 @@ ${b}Pane${n}
  q        Show pane numbers
  Alt+h/l  Switch pane left / right
  Alt+j/k  Switch pane up / down
+ { / }    Swap pane w/ prev / next
  [        Enter copy mode
   v         begin selection
   y         copy & exit
