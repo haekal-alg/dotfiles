@@ -22,6 +22,16 @@ This triggers the `.claude/skills/install` skill, which reads `ONBOARDING.md`, a
 
 `ONBOARDING.md` is written as a step-by-step script meant to be read and run by an agent (or a careful human), not executed blind. It covers prerequisites, backing up existing dotfiles, symlinking, and the WSL-specific gotchas that won't apply everywhere.
 
+## Tools I use
+
+Alongside this config, day to day I run:
+
+- **[WezTerm](https://github.com/wezterm/wezterm)** — GPU-accelerated, cross-platform terminal emulator and multiplexer.
+- **[GlazeWM](https://github.com/glzr-io/glazewm)** — i3-inspired tiling window manager for Windows.
+- **[agent-yes](https://github.com/snomiao/agent-yes)** — runs AI coding agents (Claude, Codex, Gemini, ...) unattended: auto-answers prompts and auto-retries on rate limits.
+
+None of these have their config tracked in this repo — just tmux/vim here.
+
 ## What this config can do
 
 **tmux (`.tmux.conf`)**
