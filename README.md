@@ -26,7 +26,8 @@ This triggers the `.claude/skills/install` skill, which reads `ONBOARDING.md`, a
 
 Alongside this config, day to day I run:
 
-- **[WezTerm](https://github.com/wezterm/wezterm)** — GPU-accelerated, cross-platform terminal emulator and multiplexer.
+- **[Alacritty](https://github.com/alacritty/alacritty)** — GPU-accelerated, cross-platform terminal emulator. No built-in multiplexer, which is exactly what the tmux config here is for.
+- **[Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh)** — zsh framework. The login shell is zsh, so the shell-side pieces referenced below (PATH ordering, the tmux autostart, the Windows PATH injection) live in `~/.zshrc` rather than `~/.bashrc`.
 - **[GlazeWM](https://github.com/glzr-io/glazewm)** — i3-inspired tiling window manager for Windows.
 - **[agent-yes](https://github.com/snomiao/agent-yes)** — runs AI coding agents (Claude, Codex, Gemini, ...) unattended: auto-answers prompts and auto-retries on rate limits.
 
