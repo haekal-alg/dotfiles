@@ -24,14 +24,16 @@ This triggers the `.claude/skills/install` skill, which reads `ONBOARDING.md`, a
 
 ## Tools I use
 
-Alongside this config, day to day I run:
+The day-to-day setup this config sits in:
 
 - **[Alacritty](https://github.com/alacritty/alacritty)** — GPU-accelerated, cross-platform terminal emulator. No built-in multiplexer, which is exactly what the tmux config here is for.
+- **[tmux](https://github.com/tmux/tmux)** — terminal multiplexer. `.tmux.conf` here is written against **3.7b**; a few options it uses don't exist in the 3.2a that Ubuntu's apt still ships.
+- **[Neovim](https://github.com/neovim/neovim)** — editor. It reads the `.vimrc` in this repo via a one-line `~/.config/nvim/init.lua` shim (`vim.cmd.source(vim.fn.expand("~/.vimrc"))`). That shim isn't tracked here, so create it yourself if you want the vim config to apply under Neovim.
 - **[Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh)** — zsh framework. The login shell is zsh, so the shell-side pieces referenced below (PATH ordering, the tmux autostart, the Windows PATH injection) live in `~/.zshrc` rather than `~/.bashrc`.
 - **[GlazeWM](https://github.com/glzr-io/glazewm)** — i3-inspired tiling window manager for Windows.
 - **[agent-yes](https://github.com/snomiao/agent-yes)** — runs AI coding agents (Claude, Codex, Gemini, ...) unattended: auto-answers prompts and auto-retries on rate limits.
 
-None of these have their config tracked in this repo — just tmux/vim here.
+Only tmux and vim are configured here. Nothing else on that list has its config tracked in this repo.
 
 ## What this config can do
 
