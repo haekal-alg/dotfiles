@@ -15,3 +15,13 @@ Thumbs.db
 .tmux.conf.bak
 .vimrc.bak
 .tmux/cheatsheet.sh.bak
+
+# alacritty.toml and its imported theme are symlinks into %APPDATA% on the
+# Windows side, so their link targets hardcode the Windows account name.
+# Committing either would leak that, same class of bug as the 2026-07-19
+# win32yank incident -- and git stores a symlink as its target string, so the
+# leak lands in history even though the file content itself is harmless colors.
+# Terminal-emulator config is out of this repo scope anyway -- README says
+# tmux/vim only.
+alacritty.toml
+github-dark.toml
