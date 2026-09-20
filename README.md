@@ -31,6 +31,8 @@ The day-to-day setup this config sits in:
 - **[Neovim](https://github.com/neovim/neovim)** — editor. It reads the `.vimrc` in this repo via a one-line `~/.config/nvim/init.lua` shim (`vim.cmd.source(vim.fn.expand("~/.vimrc"))`). That shim isn't tracked here, so create it yourself if you want the vim config to apply under Neovim.
 - **[Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh)** — zsh framework. The login shell is zsh, so the shell-side pieces referenced below (PATH ordering, the tmux autostart, the Windows PATH injection) live in `~/.zshrc` rather than `~/.bashrc`.
 - **[GlazeWM](https://github.com/glzr-io/glazewm)** — i3-inspired tiling window manager for Windows.
+- **[Zebar](https://github.com/glzr-io/zebar)** — customizable, cross-platform status bar/widget tool, from the same team as GlazeWM.
+- **[tacky-borders](https://github.com/lukeyou05/tacky-borders)** — customizable window border accents (color, gradient, radius) for Windows 10/11.
 - **[agent-yes](https://github.com/snomiao/agent-yes)** — runs AI coding agents (Claude, Codex, Gemini, ...) unattended: auto-answers prompts and auto-retries on rate limits.
 
 Only tmux and vim are configured here. Nothing else on that list has its config tracked in this repo.
