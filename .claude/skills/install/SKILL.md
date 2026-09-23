@@ -1,6 +1,6 @@
 ---
 name: install
-description: Install these dotfiles (tmux, vim config) onto the current machine — reads ONBOARDING.md, adapts the WSL-specific bits to whatever OS this actually is, and confirms with the user before any breaking change.
+description: Install these dotfiles (tmux, vim, Claude Code statusline) onto the current machine — reads ONBOARDING.md, adapts the WSL-specific bits to whatever OS this actually is, and confirms with the user before any breaking change.
 ---
 
 # Install dotfiles
@@ -13,10 +13,12 @@ current machine, adapting as you go:
    what version. Don't assume WSL just because `ONBOARDING.md` was written
    on WSL — check.
 2. **Check prerequisites** per `ONBOARDING.md` step 1 (tmux >= 3.2, full vim
-   not vim-tiny). Install whatever's missing for the detected OS.
+   not vim-tiny, python3 for the statusline). Install whatever's missing for
+   the detected OS.
 3. **Before touching any target path** (`~/.tmux.conf`, `~/.vimrc`,
-   `~/.tmux/cheatsheet.sh`), check what's already there. An existing file
-   belongs to the user — never overwrite or move it silently.
+   `~/.tmux/cheatsheet.sh`, `~/.claude/statusline.py`), check what's already
+   there. An existing file belongs to the user — never overwrite or move it
+   silently.
 4. **Ask before applying anything breaking.** This includes, at minimum:
    overwriting or moving an existing dotfile, replacing a symlink that
    points somewhere else, restarting or killing a running tmux server, and
@@ -31,7 +33,11 @@ current machine, adapting as you go:
    Windows PATH injection if not on WSL.
 6. **Symlink into place** per `ONBOARDING.md` step 3, only for the paths
    cleared in steps 3–4 above.
-7. **Reload and verify** using the checklist in `ONBOARDING.md` step 4.
+7. **Merge the `statusLine` key into `~/.claude/settings.json`** per
+   `ONBOARDING.md` step 4 — merge, never overwrite: that file holds the user's
+   own model, theme, and plugin settings. An existing `statusLine` pointing
+   elsewhere is a breaking change under step 4's rule; ask first.
+8. **Reload and verify** using the checklist in `ONBOARDING.md` step 5.
 
 If this config is already symlinked in on this machine, treat a re-run as an
 update/verify pass, not a fresh install.

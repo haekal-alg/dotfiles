@@ -2,7 +2,7 @@
 
 ## What this is
 
-My tmux and vim config, the stuff I actually use day to day. Written and tested on WSL2 only, so a few pieces assume that environment specifically: the Windows-clipboard bridge (win32yank/clip.exe), the injected `/mnt/c/Windows` PATH, the DECSCUSR cursor passthrough. Not a plug-and-drop config. Read through the files and reconfigure the WSL-specific bits for your platform, or hand that pass to an AI agent instead of doing it by hand (see below).
+My tmux, vim, and Claude Code config, the stuff I actually use day to day. Written and tested on WSL2 only, so a few pieces assume that environment specifically: the Windows-clipboard bridge (win32yank/clip.exe), the injected `/mnt/c/Windows` PATH, the DECSCUSR cursor passthrough. Not a plug-and-drop config. Read through the files and reconfigure the WSL-specific bits for your platform, or hand that pass to an AI agent instead of doing it by hand (see below).
 
 ## Install (AI-assisted)
 
@@ -54,6 +54,13 @@ Only tmux and vim are configured here. Nothing else on that list has its config 
 - Yank bridges: yanking in vim pushes to both tmux's paste buffer and the Windows clipboard
 - Paste bridge: `p`/`P` pull from the Windows clipboard first, so paste always has the latest system-clipboard content
 - Cursor shape changes between normal and insert mode
+
+**Claude Code statusline (`.claude/statusline.py`)**
+- Two lines: model + effort + 5h/7d rate-limit usage with reset countdowns on top; context-window gauge, working directory, and git branch below
+- Context gauge and rate-limit percentages are color-coded green/yellow/red, so "how close am I to a compact" is readable without parsing numbers
+- Branch is read straight out of `.git/HEAD` rather than by shelling out to git — the statusline redraws constantly, and on WSL's `/mnt/c` a `git` subprocess costs ~60ms against ~7ms for the file read
+- Path is middle-elided to fit, and shrinks to make room for whatever the gauge and branch need
+- Stdlib-only Python 3, no dependencies
 
 **Other**
 - `.gitattributes` forces LF line endings, since the repo moves between Windows and Linux
