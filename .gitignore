@@ -15,6 +15,7 @@ Thumbs.db
 .tmux.conf.bak
 .vimrc.bak
 .tmux/cheatsheet.sh.bak
+.tmux/clip.sh.bak
 .claude/statusline.py.bak
 
 # alacritty.toml and its imported theme are symlinks into %APPDATA% on the

@@ -68,7 +68,7 @@ set paste
 " on this machine). Covers y/d/c, not just y: TextYankPost also fires for
 " delete and change (dd/cc/etc. fill the unnamed register too), and the
 " pull-before-paste hook below overwrites the unnamed register from the
-" Windows clipboard on every p/P — if a delete didn't reach the Windows
+" OS clipboard on every p/P — if a delete didn't reach the OS
 " clipboard here, that pull would clobber it right before pasting.
 " Reads @" (unnamed), not @0: register 0 only holds the last true yank and
 " is untouched by delete/change, so @0 would silently miss every dd/cc.
@@ -79,38 +79,38 @@ if exists('$TMUX')
   augroup END
 endif
 
-" Also push vim yanks/deletes straight to the Windows clipboard (win32yank),
-" not just tmux's buffer, so a vim yank or dd is pastable in the
-" browser/other Windows apps too — and so the pull-before-paste hook below
-" round-trips the correct content instead of stale clipboard data. Gated on
-" WSL, not $TMUX, so it works outside tmux too. Read side (paste) needs its
-" own hook below since TextYankPost only fires on yank/delete/change, not put.
-" NOTE: win32yank.exe must live on the NTFS-backed /mnt/c filesystem, not
-" the WSL/ext4 side — launched via WSL interop from an ext4 path it fails
-" clipboard access with OS error 5 (no window-station attachment); from
-" /mnt/c it's reliable. Hence the absolute path instead of relying on PATH.
-" Resolved via glob() instead of a hardcoded /mnt/c/Users/<name>/... —
-" keeps the Windows account name out of this file and works unmodified
-" on any machine.
-let s:win32yank = get(glob('/mnt/c/Users/*/.local/bin/win32yank.exe', 0, 1), 0, '')
-if exists('$WSL_DISTRO_NAME')
-  function! s:PushWinClipboard()
-    call system(s:win32yank . ' -i --crlf', @")
+" Also push vim yanks/deletes straight to the OS clipboard, not just tmux's
+" buffer, so a vim yank or dd is pastable in the browser/other apps too —
+" and so the pull-before-paste hook below round-trips the correct content
+" instead of stale clipboard data. Gated on the helper script existing, not
+" $TMUX, so it works outside tmux too. Read side (paste) needs its own hook
+" below since TextYankPost only fires on yank/delete/change, not put.
+" The per-OS tooling (win32yank on WSL, pbcopy on macOS, wl-copy/xclip/xsel
+" on Linux) lives in ~/.tmux/clip.sh, shared with .tmux.conf — see the
+" comments there for why win32yank needs its /mnt/c path.
+let s:clip = expand('~/.tmux/clip.sh')
+if filereadable(s:clip)
+  function! s:PushClipboard()
+    call system('bash ' . shellescape(s:clip) . ' copy', @")
   endfunction
-  augroup WinClipboardYankBridge
+  augroup ClipboardYankBridge
     autocmd!
-    autocmd TextYankPost * if v:event.operator =~# '[ydc]' | call s:PushWinClipboard() | endif
+    autocmd TextYankPost * if v:event.operator =~# '[ydc]' | call s:PushClipboard() | endif
   augroup END
 endif
 
-" Pull the Windows clipboard into the unnamed register before p/P, so
-" pasting in vim gets whatever was last copied on the Windows side (e.g.
-" a browser). win32yank is the read path — clip.exe is write-only and the
-" PowerShell Get-Clipboard round-trip tested before this was unreliable.
-if exists('$WSL_DISTRO_NAME')
-  function! s:PullWinClipboard()
-    let @" = system(s:win32yank . ' -o --lf')
+" Pull the OS clipboard into the unnamed register before p/P, so pasting in
+" vim gets whatever was last copied outside vim (e.g. a browser). Only
+" overwrites @" on success: with no clipboard reader, clip.sh exits non-zero
+" with empty output, and assigning that would wipe the register right before
+" the put.
+if filereadable(s:clip)
+  function! s:PullClipboard()
+    let l:text = system('bash ' . shellescape(s:clip) . ' paste')
+    if !v:shell_error
+      let @" = l:text
+    endif
   endfunction
-  nnoremap <silent> p :call <SID>PullWinClipboard()<CR>p
-  nnoremap <silent> P :call <SID>PullWinClipboard()<CR>P
+  nnoremap <silent> p :call <SID>PullClipboard()<CR>p
+  nnoremap <silent> P :call <SID>PullClipboard()<CR>P
 endif

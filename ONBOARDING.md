@@ -1,7 +1,7 @@
 # Dotfiles onboarding — tmux + vim + Claude Code statusline
 
-This repo holds `.tmux.conf`, `.vimrc`, `.tmux/cheatsheet.sh`, and
-`.claude/statusline.py`. Files are laid out exactly as they sit under `$HOME`, so
+This repo holds `.tmux.conf`, `.vimrc`, `.tmux/cheatsheet.sh`, `.tmux/clip.sh`,
+and `.claude/statusline.py`. Files are laid out exactly as they sit under `$HOME`, so
 installing is a 1:1 symlink per file — no renaming, no templating.
 
 The one exception is `~/.claude/settings.json` (step 4): it holds the rest of
@@ -48,7 +48,7 @@ this repo depends on it.
 Don't overwrite anything blindly — check first:
 
 ```bash
-for f in .tmux.conf .vimrc .tmux/cheatsheet.sh .claude/statusline.py; do
+for f in .tmux.conf .vimrc .tmux/cheatsheet.sh .tmux/clip.sh .claude/statusline.py; do
   [ -e "$HOME/$f" ] && echo "EXISTS: $HOME/$f"
 done
 ```
@@ -59,6 +59,7 @@ For anything that exists and isn't already a symlink to this repo, move it aside
 mv "$HOME/.tmux.conf" "$HOME/.tmux.conf.bak"      # only if it exists
 mv "$HOME/.vimrc" "$HOME/.vimrc.bak"               # only if it exists
 mv "$HOME/.tmux/cheatsheet.sh" "$HOME/.tmux/cheatsheet.sh.bak"  # only if it exists
+mv "$HOME/.tmux/clip.sh" "$HOME/.tmux/clip.sh.bak"  # only if it exists
 mv "$HOME/.claude/statusline.py" "$HOME/.claude/statusline.py.bak"  # only if it exists
 ```
 
@@ -72,6 +73,7 @@ mkdir -p "$HOME/.tmux" "$HOME/.claude"
 ln -sf "$REPO/.tmux.conf" "$HOME/.tmux.conf"
 ln -sf "$REPO/.vimrc" "$HOME/.vimrc"
 ln -sf "$REPO/.tmux/cheatsheet.sh" "$HOME/.tmux/cheatsheet.sh"
+ln -sf "$REPO/.tmux/clip.sh" "$HOME/.tmux/clip.sh"
 ln -sf "$REPO/.claude/statusline.py" "$HOME/.claude/statusline.py"
 ```
 
@@ -112,6 +114,9 @@ Checklist:
       see gotchas below)
 - [ ] Yank a line in vim (`yy`) inside tmux, then `prefix` + `p` in another pane
       — should paste the yanked text
+- [ ] Copy something in a browser, then `prefix` + `p` — should paste it
+      (proves `clip.sh` found a clipboard tool; test directly with
+      `bash ~/.tmux/clip.sh paste`)
 - [ ] Claude Code shows two status lines: model + rate limits on top, context
       gauge + path + branch below. Test it standalone without launching Claude:
       ```bash
@@ -119,21 +124,25 @@ Checklist:
       ```
       Should print the gauge, the path, and the current git branch.
 
-## Known gotchas — this config assumes WSL2
+## Known gotchas — per platform
 
-These dotfiles were written on WSL2 with the default `C:` drive mount. Check
-which of these applies before assuming a clean install:
+These dotfiles were written on WSL2 and are used on macOS too. Check which of
+these applies before assuming a clean install:
 
-1. **`default-command` in `.tmux.conf`** hardcodes
-   `PATH="$PATH:/mnt/c/Windows/System32:/mnt/c/Windows"`. Only meaningful under
-   WSL with the default mount — harmless dead PATH entries on native Linux/macOS,
-   but pointless there. Remove the line if not on WSL.
-2. **Copy-mode `y` binding** branches on `uname -r | grep -qi microsoft`:
-   WSL → pipes to `clip.exe` (needs WSL interop enabled, on by default),
-   anything else → `pbcopy` (macOS only). **On plain Linux (X11/Wayland) neither
-   branch applies and system-clipboard copy silently no-ops.** If the target
-   machine is plain Linux, add a third branch using `xclip`/`xsel` (X11) or
-   `wl-copy` (Wayland) — install whichever matches the display server first.
+1. **Alt keys on macOS.** The prefix (`Alt+q`) and pane switching (`Alt+h/j/k/l`)
+   need the terminal to send Option as Meta. iTerm2 ships with it off: Settings →
+   Profiles → Keys → Left Option key → **Esc+**. Terminal.app: Settings →
+   Profiles → Keyboard → "Use Option as Meta key". Alacritty:
+   `option_as_alt = "OnlyLeft"` under `[window]`. Without it nothing in tmux
+   errors — the keys just type `œ`/`˙` instead.
+2. **System clipboard** goes through `.tmux/clip.sh`, shared by tmux (`prefix p`,
+   `prefix ]`, copy-mode `y`) and vim (yank/delete push, `p`/`P` pull). It picks
+   the tool per OS: win32yank on WSL (must sit at
+   `/mnt/c/Users/<you>/.local/bin/win32yank.exe` — see the comment in the
+   script; `clip.exe` is the copy-only fallback), `pbcopy`/`pbpaste` on macOS,
+   `wl-copy`/`wl-paste` on Wayland, `xclip` or `xsel` on X11. **On plain Linux
+   install one of those first** — with none present, copy silently no-ops and
+   paste falls back to tmux's own buffer.
 3. **`statusline.py`'s path shortening** rewrites `/mnt/<drive>/Users/<you>` to
    `C:~` — a WSL-ism, and deliberately only when the Windows username matches
    yours. On native Linux/macOS that branch never fires and paths render
@@ -143,6 +152,10 @@ which of these applies before assuming a clean install:
    DECSCUSR escapes. Windows Terminal and iTerm2 do; some minimal/embedded
    terminals don't — if the cursor doesn't change shape in insert mode, this is
    why, and it's cosmetic only (safe to ignore).
+5. **Per-machine tweaks** go in `~/.tmux.local.conf` (untracked, sourced last by
+   `.tmux.conf`, optional). When backing up a pre-existing `~/.tmux.conf` in
+   step 2, that's the place for any of its settings worth keeping — don't edit
+   the shared `.tmux.conf` for one machine.
 
 ## What's deliberately NOT in this repo
 

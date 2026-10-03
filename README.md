@@ -2,7 +2,7 @@
 
 ## What this is
 
-My tmux, vim, and Claude Code config, the stuff I actually use day to day. Written and tested on WSL2 only, so a few pieces assume that environment specifically: the Windows-clipboard bridge (win32yank/clip.exe), the injected `/mnt/c/Windows` PATH, the DECSCUSR cursor passthrough. Not a plug-and-drop config. Read through the files and reconfigure the WSL-specific bits for your platform, or hand that pass to an AI agent instead of doing it by hand (see below).
+My tmux, vim, and Claude Code config, the stuff I actually use day to day. Used on WSL2 and macOS from the same files: the OS-specific clipboard handling lives in one helper script (`.tmux/clip.sh`) that picks the right tool at runtime, and per-machine tweaks go in an untracked `~/.tmux.local.conf`. Plain Linux should work once a clipboard tool (wl-clipboard, xclip or xsel) is installed, but isn't tested. Still not plug-and-drop: read `ONBOARDING.md`'s gotchas, or hand the install to an AI agent (see below).
 
 ## Install (AI-assisted)
 
@@ -18,9 +18,9 @@ and inside the session, run:
 /install
 ```
 
-This triggers the `.claude/skills/install` skill, which reads `ONBOARDING.md`, adapts anything WSL-specific if you're not on WSL, and asks for confirmation before any breaking change (overwriting an existing dotfile, restarting a running tmux server, editing shell rc files, etc).
+This triggers the `.claude/skills/install` skill, which reads `ONBOARDING.md`, handles the per-OS bits for your platform, and asks for confirmation before any breaking change (overwriting an existing dotfile, restarting a running tmux server, editing shell rc files, etc).
 
-`ONBOARDING.md` is written as a step-by-step script meant to be read and run by an agent (or a careful human), not executed blind. It covers prerequisites, backing up existing dotfiles, symlinking, and the WSL-specific gotchas that won't apply everywhere.
+`ONBOARDING.md` is written as a step-by-step script meant to be read and run by an agent (or a careful human), not executed blind. It covers prerequisites, backing up existing dotfiles, symlinking, and the per-platform gotchas.
 
 ## Tools I use
 
@@ -46,13 +46,13 @@ Only tmux and vim are configured here. Nothing else on that list has its config 
 - Mouse mode, 10k-line scrollback, vi-style copy mode
 - Pane labeling (`prefix T`) for telling parallel terminal sessions apart at a glance
 - Built-in shortcuts popup (`prefix ?`)
-- Machine clipboard bridge: `prefix p` and `prefix ]` pull from the OS clipboard (win32yank on WSL, pbpaste on macOS) before pasting; copy-mode `y` pushes a selection back out to the OS clipboard
+- Machine clipboard bridge: `prefix p` and `prefix ]` pull from the OS clipboard (win32yank on WSL, pbpaste on macOS, wl-paste/xclip/xsel on Linux, all via `.tmux/clip.sh`) before pasting; copy-mode `y` pushes a selection back out to the OS clipboard
 - Cursor-shape (DECSCUSR) passthrough so vim's insert-mode cursor renders correctly through tmux
 
 **vim (`.vimrc`)**
 - 4-space indentation, no backup/swap files, autoread
-- Yank bridges: yanking in vim pushes to both tmux's paste buffer and the Windows clipboard
-- Paste bridge: `p`/`P` pull from the Windows clipboard first, so paste always has the latest system-clipboard content
+- Yank bridges: yanking in vim pushes to both tmux's paste buffer and the OS clipboard
+- Paste bridge: `p`/`P` pull from the OS clipboard first, so paste always has the latest system-clipboard content
 - Cursor shape changes between normal and insert mode
 
 **Claude Code statusline (`.claude/statusline.py`)**
