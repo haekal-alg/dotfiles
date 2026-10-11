@@ -1,7 +1,7 @@
 # Dotfiles onboarding — tmux + vim + Claude Code statusline
 
 This repo holds `.tmux.conf`, `.vimrc`, `.tmux/cheatsheet.sh`, `.tmux/clip.sh`,
-and `.claude/statusline.py`. Files are laid out exactly as they sit under `$HOME`, so
+`.claude/statusline.py`, and `.claude/CLAUDE.md` (global Claude Code instructions). Files are laid out exactly as they sit under `$HOME`, so
 installing is a 1:1 symlink per file — no renaming, no templating.
 
 The one exception is `~/.claude/settings.json` (step 4): it holds the rest of
@@ -48,7 +48,7 @@ this repo depends on it.
 Don't overwrite anything blindly — check first:
 
 ```bash
-for f in .tmux.conf .vimrc .tmux/cheatsheet.sh .tmux/clip.sh .claude/statusline.py; do
+for f in .tmux.conf .vimrc .tmux/cheatsheet.sh .tmux/clip.sh .claude/statusline.py .claude/CLAUDE.md; do
   [ -e "$HOME/$f" ] && echo "EXISTS: $HOME/$f"
 done
 ```
@@ -61,7 +61,13 @@ mv "$HOME/.vimrc" "$HOME/.vimrc.bak"               # only if it exists
 mv "$HOME/.tmux/cheatsheet.sh" "$HOME/.tmux/cheatsheet.sh.bak"  # only if it exists
 mv "$HOME/.tmux/clip.sh" "$HOME/.tmux/clip.sh.bak"  # only if it exists
 mv "$HOME/.claude/statusline.py" "$HOME/.claude/statusline.py.bak"  # only if it exists
+mv "$HOME/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md.bak"  # only if it exists
 ```
+
+An existing `~/.claude/CLAUDE.md` holds the user's own global instructions for
+Claude Code. Don't just park it in `.bak`: show its contents and offer to merge
+any rules worth keeping into this repo's `.claude/CLAUDE.md` before linking, or
+they stop applying once the symlink is in place.
 
 ## 3. Symlink into place
 
@@ -75,6 +81,7 @@ ln -sf "$REPO/.vimrc" "$HOME/.vimrc"
 ln -sf "$REPO/.tmux/cheatsheet.sh" "$HOME/.tmux/cheatsheet.sh"
 ln -sf "$REPO/.tmux/clip.sh" "$HOME/.tmux/clip.sh"
 ln -sf "$REPO/.claude/statusline.py" "$HOME/.claude/statusline.py"
+ln -sf "$REPO/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 ```
 
 ## 4. Point Claude Code at the statusline
@@ -156,6 +163,11 @@ these applies before assuming a clean install:
    `.tmux.conf`, optional). When backing up a pre-existing `~/.tmux.conf` in
    step 2, that's the place for any of its settings worth keeping — don't edit
    the shared `.tmux.conf` for one machine.
+6. **`CLAUDE.md` loads twice inside this repo.** `~/.claude/CLAUDE.md` is a
+   symlink to `.claude/CLAUDE.md` here, so a Claude Code session started in this
+   repo reads the same file as both the global and the project instructions.
+   Harmless (just duplicated context), and only in this repo — every other
+   project gets it once.
 
 ## What's deliberately NOT in this repo
 

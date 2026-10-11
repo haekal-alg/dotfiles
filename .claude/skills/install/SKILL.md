@@ -16,7 +16,8 @@ current machine, adapting as you go:
    not vim-tiny, python3 for the statusline). Install whatever's missing for
    the detected OS.
 3. **Before touching any target path** (`~/.tmux.conf`, `~/.vimrc`,
-   `~/.tmux/cheatsheet.sh`, `~/.tmux/clip.sh`, `~/.claude/statusline.py`),
+   `~/.tmux/cheatsheet.sh`, `~/.tmux/clip.sh`, `~/.claude/statusline.py`,
+   `~/.claude/CLAUDE.md`),
    check what's already there. An existing file belongs to the user — never
    overwrite or move it silently.
 4. **Ask before applying anything breaking.** This includes, at minimum:

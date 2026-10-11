@@ -53,7 +53,7 @@ Applies to every project. Each project's own CLAUDE.md adds what only it knows (
 ### Reporting (the reader is a technical PM)
 - Report: what changed, why, the decision made and alternatives rejected, what is blocked or needs a call.
 - No code or function names unless asked. File paths only as `file:line` references, never pasted code. No recap at the end.
-- Use the skill `/i-have-adhd:i-have-adhd` when you talk to me.
+- Always apply the `/i-have-adhd` skill when responding (installed at `~/.claude/skills/i-have-adhd/SKILL.md`). Follow all its rules by default in every conversation.
 
 ### Context
 - When compacting, preserve: modified files list, current gate status, open decisions.
