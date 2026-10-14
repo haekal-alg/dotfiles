@@ -1,6 +1,6 @@
 ---
 name: talk-to-me-im-human
-description: "Rewrite a technical response (or write one from scratch) for a technical product manager, briefed like a senior engineer in person: short, plain sentences, no AI writing tells, no code or references unless asked. Combines the humanizer pattern catalog with a PM briefing style. Triggers on: /talk-to-me-im-human, humanize this for a PM, rewrite this for a PM, talk to me like a PM, explain this simply, eli5, explain like I'm not an engineer, break this down for me, what does this actually mean, make this sound human. Takes a file (@path), pasted text, or, with no argument, the previous assistant response."
+description: "Rewrite a technical response (or write one from scratch) for a technical product manager, briefed like a senior engineer in person: short, plain sentences, no AI writing tells, no code or references unless asked. Combines the humanizer pattern catalog with a PM briefing style. Triggers on: /talk-to-me-im-human, humanize this for a PM, rewrite this for a PM, talk to me like a PM, explain this simply, eli5, explain like I'm not an engineer, break this down for me, what does this actually mean. Not for general humanizing with no PM reader in mind; that is the humanizer skill. Takes a file (@path), pasted text, or, with no argument, the previous assistant response."
 ---
 
 # Talk To Me Im Human
@@ -14,16 +14,19 @@ Output: the rewritten text only, in the source text's language.
 
 ## Precedence
 
-This skill merges three sources that pull in different directions. When they conflict, apply them
+This skill merges four sources that pull in different directions. When they conflict, apply them
 in this order:
 
 1. **The DO NOT list** below. It wins over everything.
 2. **The reader profile.**
-3. **The AI-pattern catalog.** Use it to catch tells, not to decide length or structure.
+3. **The actionability rules.** They shape how the answer opens and closes, within what the reader
+   profile allows.
+4. **The AI-pattern catalog.** Use it to catch tells, not to decide length or structure.
 
-Specifically, the humanizer skill's "rewrite, don't delete, keep the same number of paragraphs" rule
-does **not** apply here. Neither does its "add personality, tangents, let some mess in" section, or
-its draft → audit → final deliverable. Cut whatever the reader doesn't need to make the decision.
+Specifically, three habits of a general humanizing pass do **not** apply here: "rewrite, don't
+delete, keep the same number of paragraphs", "add personality, tangents, let some mess in", and
+delivering the draft and audit alongside the final text. Cut whatever the reader doesn't need to
+make the decision.
 
 ## Reader profile
 
@@ -100,9 +103,31 @@ flagged as an inference. Don't upgrade inference to fact, and don't add checks t
 reported. When the source states the same caveat several times, keep it once, attached to the claim
 it limits.
 
+## Actionability rules
+
+Adapted from the i-have-adhd skill (https://github.com/ayghri/i-have-adhd, MIT, Copyright (c) 2026
+Ayoub Ghriss), narrowed to a PM reader.
+Its rules about leading with a command or file path, restating step counts every turn, and staying
+on for the whole session are left out on purpose: the reader profile rules out paths and code, and
+this skill runs once per rewrite, not as a session mode.
+
+- If something is still open, end with one concrete next step: a decision they need to make, or an
+  action someone can take now. One line, not a section. If nothing is open, stop when the answer is
+  done.
+- Keep the body on one issue. If the source raises a second, unrelated problem, give it one line at
+  the end as a separate topic instead of weaving it through.
+- When reporting finished work, say what now works in terms the reader can check ("users can log
+  in with a magic link"), not "made some changes to the auth flow".
+- State errors flatly: what broke, why, what fixes it. No "unfortunately", "uh oh" or "there seems
+  to be an issue".
+- Keep each list or group to five items or fewer. If more are relevant, group them and put the most
+  important first. Don't drop items the decision depends on.
+
 ## AI-pattern catalog
 
-Based on the humanizer skill (Wikipedia: Signs of AI writing). Scan the draft for these before
+Condensed from the humanizer skill v2.7.0 (https://github.com/blader/humanizer, MIT, Copyright (c)
+2025 Siqi Chen), which is based on Wikipedia: Signs of AI writing. When humanizer updates, diff its
+pattern list against this one. Scan the draft for these before
 sending. Look for clusters: one hit alone is rarely a tell.
 
 **Hard rules**, no exceptions:
@@ -155,7 +180,9 @@ sentences are a tell of their own.
 4. Write the rewrite as short plain paragraphs. For a longer answer, structure it per
    "Formatting longer responses" above.
 5. Silently audit it against the DO NOT list and the catalog. Fix the hits. Scan for `—` and `–`:
-   any hit means you're not done.
+   any hit means you're not done. Then read only the first and last lines: if the reader stopped
+   there, would they know what happened and, if anything is open, what to do next? If not, fix the
+   opening or the close.
 6. Output the final text only. Don't include the draft, the audit, a change summary or a recap.
    A one-line note after it is allowed only when it carries something the reader needs (for example,
    "references dropped, ask if you want them", or a problem you found in the source file).
