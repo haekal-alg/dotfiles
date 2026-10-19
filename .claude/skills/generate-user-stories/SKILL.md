@@ -27,9 +27,11 @@ that prove it happened.
 
 ## Steps
 
-1. **Collect.** Run the collector from the repo root and save the output to the scratchpad:
+1. **Collect.** Run the collector from the repo root and save the output to the scratchpad.
+   `<skill-dir>` is the base directory shown when this skill loads: the skill is installed
+   globally, so a repo-relative path only resolves inside the dotfiles repo.
    ```
-   .claude/skills/generate-user-stories/collect-commits.sh '<author-regex>' > <scratchpad>/commits.txt
+   <skill-dir>/collect-commits.sh '<author-regex>' > <scratchpad>/commits.txt
    ```
    It prints one record per commit, oldest first: full hash, date, pushed flag, URL, branches,
    subject, diffstat, files touched, and the first lines of the body. If `--since` was given,
