@@ -17,7 +17,7 @@ current machine, adapting as you go:
    the detected OS.
 3. **Before touching any target path** (`~/.tmux.conf`, `~/.vimrc`,
    `~/.tmux/cheatsheet.sh`, `~/.tmux/clip.sh`, `~/.claude/statusline.py`,
-   `~/.claude/CLAUDE.md`),
+   `~/.claude/CLAUDE.md`, `~/.claude/skills/<name>`),
    check what's already there. An existing file belongs to the user — never
    overwrite or move it silently.
 4. **Ask before applying anything breaking.** This includes, at minimum:
@@ -54,7 +54,10 @@ current machine, adapting as you go:
    unbind that key there too. The `prefix + ?` popup always says Alt+q, so
    tell the user it will be wrong for any other prefix.
 7. **Symlink into place** per `ONBOARDING.md` step 3, only for the paths
-   cleared in steps 3–4 above.
+   cleared in steps 3–4 above. That includes every repo skill except
+   `install`, on every run, so skills added upstream get linked on an update.
+   Then list dangling links into the repo's skills (removed or renamed
+   upstream) and ask before deleting them.
 8. **Merge the `statusLine` key into `~/.claude/settings.json`** per
    `ONBOARDING.md` step 4 — merge, never overwrite: that file holds the user's
    own model, theme, and plugin settings. An existing `statusLine` pointing

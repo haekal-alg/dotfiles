@@ -1,7 +1,7 @@
 # Dotfiles onboarding — tmux + vim + Claude Code statusline
 
 This repo holds `.tmux.conf`, `.vimrc`, `.tmux/cheatsheet.sh`, `.tmux/clip.sh`,
-`.claude/statusline.py`, and `.claude/CLAUDE.md` (global Claude Code instructions). Files are laid out exactly as they sit under `$HOME`, so
+`.claude/statusline.py`, `.claude/CLAUDE.md` (global Claude Code instructions), and the Claude Code skills under `.claude/skills/`. Files are laid out exactly as they sit under `$HOME`, so
 installing is a 1:1 symlink per file — no renaming, no templating.
 
 The one exception is `~/.claude/settings.json` (step 4): it holds the rest of
@@ -82,6 +82,29 @@ ln -sf "$REPO/.tmux/cheatsheet.sh" "$HOME/.tmux/cheatsheet.sh"
 ln -sf "$REPO/.tmux/clip.sh" "$HOME/.tmux/clip.sh"
 ln -sf "$REPO/.claude/statusline.py" "$HOME/.claude/statusline.py"
 ln -sf "$REPO/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+```
+
+Then link each skill directory into `~/.claude/skills/` so it works in every
+project. Skip `install`: it only makes sense inside this repo, where it already
+loads as a project skill. A name that's already taken by something else is
+reported and left alone, since it's the user's own skill:
+
+```bash
+mkdir -p "$HOME/.claude/skills"
+for s in "$REPO"/.claude/skills/*/; do
+  s="${s%/}"; n="$(basename "$s")"; t="$HOME/.claude/skills/$n"
+  [ "$n" = install ] && continue
+  [ "$(readlink "$t")" = "$s" ] && continue   # already linked
+  if [ -e "$t" ] || [ -L "$t" ]; then echo "EXISTS, not touched: $t"; continue; fi
+  ln -s "$s" "$t"
+done
+```
+
+Skills removed or renamed upstream leave dangling links behind. List them, and
+remove them only after the user agrees:
+
+```bash
+find "$HOME/.claude/skills" -maxdepth 1 -type l -lname "$REPO/.claude/skills/*" ! -exec test -e {} \; -print
 ```
 
 ## 4. Point Claude Code at the statusline
