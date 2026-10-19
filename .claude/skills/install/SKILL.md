@@ -35,13 +35,32 @@ current machine, adapting as you go:
    turn it on; don't edit terminal prefs yourself). If a pre-existing
    `~/.tmux.conf` has settings the user wants to keep, offer to move them
    into `~/.tmux.local.conf` instead of editing the shared `.tmux.conf`.
-6. **Symlink into place** per `ONBOARDING.md` step 3, only for the paths
+6. **Ask which tmux prefix to use, on every run (install or update).**
+   Offer Alt+q (the shared default), Alt+w, or another key the user names.
+   On an update, read the current choice first (`~/.tmux.local.conf`, and
+   `tmux show -gv prefix` if a server is running) and offer to keep it. Alt+q
+   needs nothing. Anything else goes in `~/.tmux.local.conf`, never in the
+   shared `.tmux.conf`. Replace only the prefix lines there and keep the rest
+   (example for Alt+w):
+   ```
+   unbind-key M-q
+   set-option -g prefix M-w
+   bind-key M-w send-prefix
+   ```
+   Going back to Alt+q means removing those lines. Before accepting a custom
+   key, reject one that `.tmux.conf` already binds without the prefix
+   (`bind -n`: currently Alt+h/j/k/l). Reloading with `source-file` doesn't
+   remove the old prefix's `send-prefix` binding from a running server, so
+   unbind that key there too. The `prefix + ?` popup always says Alt+q, so
+   tell the user it will be wrong for any other prefix.
+7. **Symlink into place** per `ONBOARDING.md` step 3, only for the paths
    cleared in steps 3–4 above.
-7. **Merge the `statusLine` key into `~/.claude/settings.json`** per
+8. **Merge the `statusLine` key into `~/.claude/settings.json`** per
    `ONBOARDING.md` step 4 — merge, never overwrite: that file holds the user's
    own model, theme, and plugin settings. An existing `statusLine` pointing
    elsewhere is a breaking change under step 4's rule; ask first.
-8. **Reload and verify** using the checklist in `ONBOARDING.md` step 5.
+9. **Reload and verify** using the checklist in `ONBOARDING.md` step 5,
+   checking the prefix the user chose rather than Alt+q.
 
 If this config is already symlinked in on this machine, treat a re-run as an
 update/verify pass, not a fresh install.
