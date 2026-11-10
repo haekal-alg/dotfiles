@@ -13,10 +13,10 @@ Applies to every project. Each project's own CLAUDE.md adds what only it knows (
 - Follow patterns already in the codebase. Ask before adding a dependency.
 - Before implementing code, invoke the `ponytail:ponytail` skill.
 - Surgical edits: change only what the task needs. Flag adjacent problems in the report; don't fix them silently.
-- Bugs found along the way hurt the user: fix every one that can be fixed, without asking first, as its own commit with its own failing-first test (not folded into the task's diff), and list it in the report. Product calls, redesigns and anything that changes a look still go to the owner first.
+- Bugs found along the way are reported, not fixed on the side: name where the bug lives and whether a fix would address the symptom or the root cause, flag it in the report, and fix it only when asked. When a fix is asked for it lands as its own commit with its own failing-first test, not folded into the task diff. Product calls, redesigns and anything that changes a look go to the owner first.
 - Bugs: write a failing test that reproduces it, then fix the root cause. Never suppress the error, skip the test, or loosen an assertion to go green. State where the bug lived and whether the fix addresses symptom or cause.
 - Wide codebase searches or research: use a subagent so the main context stays clean.
-- Commit on your own after each large feature passes the gate: one commit per feature, with its plan tick and decisions-log entry (if the project keeps them), so any feature can be reverted and progress shows in `git log`.
+- Commit or push only when the owner asks, never on your own initiative. When asked: one commit per feature, with its plan tick and decisions-log entry (if the project keeps them), so any feature can be reverted and progress shows in `git log`. Never merge your own work -- the feature goes on its own branch, you open the MR and stop; the owner merges by hand.
 - Record every decision in the project's decisions log in the same step as the change, not afterwards.
 - When the owner asks you to remember something, write it into the project's CLAUDE.md (or a doc it points to), not only auto-memory, so a fresh context still has it.
 - Lessons learned while working (a measuring method, a trap, a cause of jank, a tool quirk) go into the project's CLAUDE.md in the same session, under the part they belong to, without being asked. One line each, with the evidence and date. A lesson that holds for any project goes here instead.
@@ -53,7 +53,6 @@ Applies to every project. Each project's own CLAUDE.md adds what only it knows (
 ### Reporting (the reader is a technical PM)
 - Report: what changed, why, the decision made and alternatives rejected, what is blocked or needs a call.
 - No code or function names unless asked. File paths only as `file:line` references, never pasted code. No recap at the end.
-- Always apply the `/i-have-adhd` skill when responding (installed at `~/.claude/skills/i-have-adhd/SKILL.md`). Follow all its rules by default in every conversation.
 
 ### Context
 - When compacting, preserve: modified files list, current gate status, open decisions.
