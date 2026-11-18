@@ -18,7 +18,7 @@ and inside the session, run:
 /install
 ```
 
-This triggers the `.claude/skills/install` skill, which reads `ONBOARDING.md`, handles the per-OS bits for your platform, and asks for confirmation before any breaking change (overwriting an existing dotfile, restarting a running tmux server, editing shell rc files, etc).
+This triggers the `.claude/skills/install` skill, which reads `ONBOARDING.md`, handles the per-OS bits for your platform, links the Claude Code skills in this repo, and asks for confirmation before any breaking change (overwriting an existing dotfile, restarting a running tmux server, editing shell rc files, etc).
 
 `ONBOARDING.md` is written as a step-by-step script meant to be read and run by an agent (or a careful human), not executed blind. It covers prerequisites, backing up existing dotfiles, symlinking, and the per-platform gotchas.
 
@@ -48,6 +48,7 @@ Only tmux and vim are configured here. Nothing else on that list has its config 
 - Built-in shortcuts popup (`prefix ?`)
 - Machine clipboard bridge: `prefix p` and `prefix ]` pull from the OS clipboard (win32yank on WSL, pbpaste on macOS, wl-paste/xclip/xsel on Linux, all via `.tmux/clip.sh`) before pasting; copy-mode `y` pushes a selection back out to the OS clipboard
 - Cursor-shape (DECSCUSR) passthrough so vim's insert-mode cursor renders correctly through tmux
+- Sessions survive reboots: tmux-resurrect + tmux-continuum (via TPM, self-bootstrapping) auto-save every 5 min and auto-restore on the next tmux start. `prefix C-s` / `prefix C-r` save / restore by hand
 
 **vim (`.vimrc`)**
 - 4-space indentation, no backup/swap files, autoread
@@ -61,6 +62,14 @@ Only tmux and vim are configured here. Nothing else on that list has its config 
 - Branch is read straight out of `.git/HEAD` rather than by shelling out to git — the statusline redraws constantly, and on WSL's `/mnt/c` a `git` subprocess costs ~60ms against ~7ms for the file read
 - Path is middle-elided to fit, and shrinks to make room for whatever the gauge and branch need
 - Stdlib-only Python 3, no dependencies
+
+**Claude Code skills (`.claude/skills/`)**
+- `generate-prd`: turns specs, a codebase, or a feature idea into a PRD published as an Artifact page
+- `generate-specs`: interviews you into a requirements package (`specs/`) grounded in the codebase
+- `generate-user-stories`: groups git history into user stories with commit proof, for time tracking
+- `talk-to-me-im-human`: rewrites a technical answer for a PM; loads the [humanizer](https://github.com/blader/humanizer) skill, which `/install` clones at a pinned tag
+- `install`: the installer itself, only useful inside this repo
+- All of them load when Claude Code runs inside this repo. `/install` links every one except `install` itself into `~/.claude/skills/`, so they work everywhere
 
 **Other**
 - `.gitattributes` forces LF line endings, since the repo moves between Windows and Linux

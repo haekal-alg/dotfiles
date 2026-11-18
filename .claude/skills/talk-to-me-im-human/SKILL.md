@@ -1,6 +1,6 @@
 ---
 name: talk-to-me-im-human
-description: "Rewrite a technical response (or write one from scratch) for a technical product manager, briefed like a senior engineer in person: short, plain sentences, no AI writing tells, no code or references unless asked. Combines the humanizer pattern catalog with a PM briefing style. Triggers on: /talk-to-me-im-human, humanize this for a PM, rewrite this for a PM, talk to me like a PM, explain this simply, eli5, explain like I'm not an engineer, break this down for me, what does this actually mean. Not for general humanizing with no PM reader in mind; that is the humanizer skill. Takes a file (@path), pasted text, or, with no argument, the previous assistant response."
+description: "Rewrite a technical response (or write one from scratch) for a technical product manager, briefed like a senior engineer in person: short, plain sentences, no AI writing tells, no code or references unless asked. Loads the humanizer skill for its pattern catalog and adds a PM briefing style on top. Triggers on: /talk-to-me-im-human, humanize this for a PM, rewrite this for a PM, talk to me like a PM, explain this simply, eli5, explain like I'm not an engineer, break this down for me, what does this actually mean. Not for general humanizing with no PM reader in mind; that is the humanizer skill. Takes a file (@path), pasted text, or, with no argument, the previous assistant response."
 ---
 
 # Talk To Me Im Human
@@ -21,12 +21,18 @@ in this order:
 2. **The reader profile.**
 3. **The actionability rules.** They shape how the answer opens and closes, within what the reader
    profile allows.
-4. **The AI-pattern catalog.** Use it to catch tells, not to decide length or structure.
+4. **The humanizer skill and the hard rules** under "AI patterns". Use them to catch tells, not to
+   decide length or structure.
 
-Specifically, three habits of a general humanizing pass do **not** apply here: "rewrite, don't
-delete, keep the same number of paragraphs", "add personality, tangents, let some mess in", and
-delivering the draft and audit alongside the final text. Cut whatever the reader doesn't need to
-make the decision.
+Loading humanizer brings in its own "How to work" and "What to return" sections. Three of its
+habits do **not** apply here:
+
+- "Keep every supported claim" (its draft step). Cut whatever the reader doesn't need to make the
+  decision. Its rule against adding facts still applies.
+- Taking the voice from its "Voice" section, opinions and asides included. The reader profile sets
+  the voice.
+- Its default return of draft, remaining patterns and final rewrite. Use its embedded mode: final
+  text only.
 
 ## Reader profile
 
@@ -65,7 +71,7 @@ scannability and reading enjoyment.
 - Preserve the natural conversational tone; the goal is to make the response easy to scan without
   making it feel like a rigid template.
 
-This sits alongside the catalog's hard rules, not over them: headings are sentence case, a heading
+This sits alongside the hard rules under "AI patterns", not over them: headings are sentence case, a heading
 needs more under it than one line restating it, and bold marks a term inside a sentence rather than
 labelling the start of a bullet (`- **Speed:** ...` is still out). The DO NOT list's "excessive
 sectioning" and "bullets where a paragraph is more natural" still apply. They rule out headings and
@@ -123,66 +129,52 @@ this skill runs once per rewrite, not as a session mode.
 - Keep each list or group to five items or fewer. If more are relevant, group them and put the most
   important first. Don't drop items the decision depends on.
 
-## AI-pattern catalog
+## AI patterns
 
-Condensed from the humanizer skill v2.7.0 (https://github.com/blader/humanizer, MIT, Copyright (c)
-2025 Siqi Chen), which is based on Wikipedia: Signs of AI writing. When humanizer updates, diff its
-pattern list against this one. Scan the draft for these before
-sending. Look for clusters: one hit alone is rarely a tell.
+The pattern catalog comes from the humanizer skill (https://github.com/blader/humanizer, MIT,
+Copyright (c) 2025 Siqi Chen), based on Wikipedia: Signs of AI writing. Written against v3.1.0,
+the version this repo's install step pins. Load it with the Skill tool and use its patterns and
+its "When not to act" guidance. It's loaded rather than copied here because
+a copy drifts every time humanizer updates and nothing flags it. The cost is reading its full
+instructions (about 30 KB) on every run.
+
+If humanizer isn't installed or fails to load, carry on with the rules below only, and add a
+one-line note after the output saying the full catalog wasn't applied.
+
+This skill is stricter than humanizer in a few places. Where they differ, these win.
 
 **Hard rules**, no exceptions:
 - No em dashes (—) or en dashes (–), including spaced ` — ` and ` -- `. Use a period, comma, colon or
-  parentheses, or restructure the sentence.
+  parentheses, or restructure the sentence. Humanizer lets a writing sample override this; here
+  nothing does.
 - No inline-header lists (`- **Speed:** ...`), no emojis, no title-case headings, no curly quotes.
+  Humanizer marks some of these "weak alone", acting only when other tells cluster. Here each one
+  is always out.
 - No chatbot framing: "I hope this helps", "Let me know", "Certainly", "Here is a...".
 - No signposting: "let's dive in", "here's what you need to know", "now let's look at".
 
-**Content tells:**
-- Inflated significance: "serves as a testament", "pivotal moment", "marks a shift", "underscores its importance", "evolving landscape".
-- Promotional words: "boasts", "vibrant", "seamless", "robust", "groundbreaking", "powerful".
-- Trailing -ing padding: "..., highlighting/ensuring/reflecting/showcasing ...".
-- Vague attributions: "experts argue", "industry reports", "observers note".
-- Formulaic "Despite these challenges..." or "Future outlook" closers.
-- Speculative gap-filling: text about not finding information, followed by invented filler.
-
-**Language tells:**
-- AI vocabulary: additionally, crucial, delve, enhance, fostering, highlight (verb), intricate, key (adj.), landscape, pivotal, showcase, tapestry, testament, underscore, valuable.
-- Copula avoidance: "serves as / stands as / features / boasts" where "is / has" works.
-- Negative parallelisms: "It's not just X, it's Y". Tailing negation fragments: "..., no guessing."
-- Forced rule of three.
-- Synonym cycling: calling the same thing by four different names.
-- False ranges: "from X to Y" where X and Y aren't on one scale.
-- Subjectless fragments and actor-hiding passives: "No config needed", "Worth adding a delay". Give the sentence a subject.
-- Uniform hyphenation in predicate position: "the report is high-quality" should be "high quality".
-
-**Filler and framing:**
-- Filler phrases: "in order to", "due to the fact that", "it is important to note that", "has the ability to".
-- Hedging stacks: "could potentially possibly".
-- Persuasive authority tropes: "the real question is", "at its core", "fundamentally", "what really matters".
-- Fragmented headers: a heading followed by one line that restates it.
-- Generic upbeat endings.
-- Diff-anchored writing: narrating a change ("this was added to replace...") where describing the current state works. Exception: in a correction, say what changed, since the reader acted on the old version.
-
-**Don't over-correct.** Clean grammar, formal vocabulary, a single "however" or a single dash in a
-quoted source aren't tells. Keep specific details that are hard to fake (exact numbers, error text
-the reader will actually see, product names). Vary sentence length. Evenly paced mid-length
-sentences are a tell of their own.
+**Tighter than humanizer:**
+- Subjectless fragments and actor-hiding passives ("No config needed", "Worth adding a delay"):
+  always give the sentence a subject, not only when active voice reads better.
+- Mentioning a previous version (humanizer's "writing about the document"): also allowed in a
+  correction. Say what changed, since the reader acted on the old version.
 
 ## Process
 
-1. Read the source in full. If it's a file you can't access, say so and stop.
-2. Pull out what the reader needs: the verdict, the cause, what to do, what was rejected and why, the
+1. Load the humanizer skill (see "AI patterns"), unless it's already loaded this turn.
+2. Read the source in full. If it's a file you can't access, say so and stop.
+3. Pull out what the reader needs: the verdict, the cause, what to do, what was rejected and why, the
    risk, and anything waiting on them. Drop everything else, including background they already have
    from earlier in the conversation.
-3. Translate code-level facts into their effects ("it saves the battery ID once and never refreshes
+4. Translate code-level facts into their effects ("it saves the battery ID once and never refreshes
    it", not `refresh()` reuses the cached tag). Keep error text the reader will literally see,
    product names and version numbers only when they drive a decision.
-4. Write the rewrite as short plain paragraphs. For a longer answer, structure it per
+5. Write the rewrite as short plain paragraphs. For a longer answer, structure it per
    "Formatting longer responses" above.
-5. Silently audit it against the DO NOT list and the catalog. Fix the hits. Scan for `—` and `–`:
+6. Silently audit it against the DO NOT list, humanizer's patterns and the hard rules. Fix the hits. Scan for `—` and `–`:
    any hit means you're not done. Then read only the first and last lines: if the reader stopped
    there, would they know what happened and, if anything is open, what to do next? If not, fix the
    opening or the close.
-6. Output the final text only. Don't include the draft, the audit, a change summary or a recap.
+7. Output the final text only. Don't include the draft, the audit, a change summary or a recap.
    A one-line note after it is allowed only when it carries something the reader needs (for example,
    "references dropped, ask if you want them", or a problem you found in the source file).

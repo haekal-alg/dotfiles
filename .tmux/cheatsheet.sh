@@ -37,6 +37,8 @@ ${b}Session${n}
  d        Detach client
  s        List sessions
  \$        Rename session
+ C-s/C-r  Save / restore all sessions
+ I / U    Install / update plugins
  New session: tmux new -s <name>
  (run from a shell, outside tmux)
 

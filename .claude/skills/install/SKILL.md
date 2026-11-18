@@ -1,6 +1,6 @@
 ---
 name: install
-description: Install these dotfiles (tmux, vim, Claude Code statusline) onto the current machine — reads ONBOARDING.md, handles the per-OS bits (clipboard tool, macOS Option key) for whatever OS this actually is, and confirms with the user before any breaking change.
+description: Install these dotfiles (tmux, vim, Claude Code statusline, and the Claude Code skills in this repo) onto the current machine — reads ONBOARDING.md, handles the per-OS bits (clipboard tool, macOS Option key) for whatever OS this actually is, and confirms with the user before any breaking change.
 ---
 
 # Install dotfiles
@@ -62,8 +62,14 @@ current machine, adapting as you go:
    `ONBOARDING.md` step 4 — merge, never overwrite: that file holds the user's
    own model, theme, and plugin settings. An existing `statusLine` pointing
    elsewhere is a breaking change under step 4's rule; ask first.
-9. **Reload and verify** using the checklist in `ONBOARDING.md` step 5,
-   checking the prefix the user chose rather than Alt+q.
+9. **Install skill dependencies** per `ONBOARDING.md` step 5.
+   `talk-to-me-im-human` loads the humanizer skill, which is not in this repo,
+   so it gets cloned at the pinned tag rather than symlinked. Its
+   `~/.claude/skills/humanizer` target falls under steps 3-4: check first, ask
+   before replacing. Declining is safe; that skill falls back to its own short
+   rule list and says so in its output.
+10. **Reload and verify** using the checklist in `ONBOARDING.md` step 6,
+    checking the prefix the user chose rather than Alt+q.
 
 If this config is already symlinked in on this machine, treat a re-run as an
 update/verify pass, not a fresh install.

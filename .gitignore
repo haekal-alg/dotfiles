@@ -15,6 +15,14 @@ Thumbs.db
 .tmux/clip.sh.bak
 .claude/statusline.py.bak
 
+# TPM plugin checkouts (and resurrect snapshots, on hosts where the legacy
+# ~/.tmux/resurrect dir exists -- default is ~/.local/share/tmux/resurrect)
+# belong in $HOME/.tmux, but would land here if someone symlinks the whole
+# .tmux dir instead of per-file. Snapshots record every pane's cwd and command
+# line, so they're private data.
+.tmux/plugins/
+.tmux/resurrect/
+
 # alacritty.toml and its imported theme are symlinks into %APPDATA% on the
 # Windows side, so their link targets hardcode the Windows account name.
 # Committing either would leak that, same class of bug as the 2026-07-19

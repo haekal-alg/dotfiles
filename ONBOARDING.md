@@ -1,8 +1,12 @@
-# Dotfiles onboarding — tmux + vim + Claude Code statusline
+# Dotfiles onboarding — tmux + vim + Claude Code statusline + skills
 
 This repo holds `.tmux.conf`, `.vimrc`, `.tmux/cheatsheet.sh`, `.tmux/clip.sh`,
 `.claude/statusline.py`, `.claude/CLAUDE.md` (global Claude Code instructions), and the Claude Code skills under `.claude/skills/`. Files are laid out exactly as they sit under `$HOME`, so
 installing is a 1:1 symlink per file — no renaming, no templating.
+
+Step 3 links every skill in `.claude/skills/` except `install` into
+`~/.claude/skills/`, so they work in every project. Step 5 installs the one
+outside skill they depend on.
 
 The one exception is `~/.claude/settings.json` (step 4): it holds the rest of
 your Claude Code config, so the statusline entry gets merged into it rather than
@@ -24,6 +28,7 @@ below, not just the backup step.
 tmux -V     # need >= 3.2 (uses display-popup, pane-border-lines, pane-border-format)
 vim --version | head -1   # need the FULL vim package, not vim-tiny
 python3 -V  # any 3.x; statusline.py is stdlib-only
+git --version  # .tmux.conf clones TPM + plugins into ~/.tmux/plugins on first start
 ```
 
 If `tmux -V` is missing or reports < 3.2:
@@ -129,7 +134,37 @@ replacing it.
 
 Claude Code re-reads settings on the next render; no restart needed.
 
-## 5. Reload and verify
+## 5. Skill dependencies
+
+Step 3 links this repo's own skills. Some of them load a skill that is not in
+this repo, which has to be installed separately:
+
+| Skill | Needs | Source | Pin |
+|---|---|---|---|
+| `talk-to-me-im-human` | `humanizer` | https://github.com/blader/humanizer | `v3.1.0` |
+
+Dependencies get cloned at the pinned tag, not symlinked, since they don't live
+in this repo:
+
+```bash
+git clone --depth 1 --branch v3.1.0 https://github.com/blader/humanizer.git "$HOME/.claude/skills/humanizer"
+```
+
+If `~/.claude/skills/humanizer` already exists, check its version first: the
+`metadata.version` key in its `SKILL.md` frontmatter (2.8.3 and later), or a
+top-level `version:` key before that. Matches the pin: leave it. Anything else:
+tell the user what's there and ask before replacing it. A replaced copy moves
+to `~/.claude/skills.bak/humanizer`, **not** to a `humanizer.bak` beside it:
+Claude Code loads every folder in `~/.claude/skills/` that has a `SKILL.md`, so
+a backup left there loads as a second skill with the same name. Declining is
+safe: `talk-to-me-im-human` falls back to its own short rule list and says so
+in its output.
+
+Bump the pin on purpose, not in passing. Humanizer 3.0 renamed the sections
+`talk-to-me-im-human` points at, so re-read that skill's "Precedence" and "AI
+patterns" sections against the new version before changing the tag here.
+
+## 6. Reload and verify
 
 ```bash
 tmux source-file ~/.tmux.conf     # if already inside a tmux session
@@ -153,6 +188,16 @@ Checklist:
       echo '{"model":{"display_name":"Opus 5 (1M context)"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":31,"total_input_tokens":62000,"context_window_size":200000}}' | python3 ~/.claude/statusline.py
       ```
       Should print the gauge, the path, and the current git branch.
+- [ ] `ls ~/.tmux/plugins` lists `tpm`, `tmux-resurrect`, `tmux-continuum`
+      (cloned automatically on the first config load; `prefix` + `r` retries)
+- [ ] `prefix` + `Ctrl+s` shows "Tmux environment saved!" — proves resurrect
+      loaded. Auto-restore itself only fires on a fresh server start, so it's
+      only provable after a reboot / `tmux kill-server` (ask first, see top).
+- [ ] Every repo skill except `install` shows as a link in
+      `ls -l ~/.claude/skills/`, and `/<name>` works in a new Claude Code
+      session started outside this repo
+- [ ] If humanizer was installed: `git -C ~/.claude/skills/humanizer describe --tags`
+      prints `v3.1.0`
 
 ## Known gotchas — per platform
 
@@ -191,11 +236,41 @@ these applies before assuming a clean install:
    repo reads the same file as both the global and the project instructions.
    Harmless (just duplicated context), and only in this repo — every other
    project gets it once.
+7. **Session persistence (tmux-resurrect + tmux-continuum, via TPM).** The
+   first config load clones TPM and both plugins into `~/.tmux/plugins` — a
+   real directory, never symlinked into this repo. No git or network on that
+   first start means a startup error and no persistence; the install retries
+   on every config reload (`prefix` + `r`) or new server until it succeeds.
+   (`prefix` + `I` only exists once TPM itself has cloned, so it's no fallback.)
+   Things that don't behave the way people expect:
+   - Saving is periodic (every 5 min), never on shutdown. Windows shutdown /
+     `wsl --shutdown` kills tmux outright, so anything newer than the last save
+     is lost. `prefix` + `Ctrl+s` before shutting down if it matters.
+   - Restore recreates sessions, windows, layouts, and pane directories.
+     Running programs are relaunched only for a short whitelist (vim, less,
+     man, ...), so ssh sessions, REPLs, and `-f` log tails come back as plain
+     shells.
+   - Auto-save rides on a hook in `status-right`. Setting `status-right` in
+     `~/.tmux.local.conf`, or turning the status bar off, stops saving silently.
+   - Auto-restore runs only for the first tmux server. A second server (e.g.
+     `tmux -L other`) neither restores nor auto-saves, by design.
+8. **Skills on Windows (step 3).** Two traps:
+   - Link into the `.claude` folder of the Claude Code you actually run. If
+     Claude Code runs on the Windows side while this repo lives in WSL, it reads
+     `C:\Users\<you>\.claude`, not WSL's `~/.claude`.
+   - Git Bash's `ln -s` silently copies the folder instead of linking it. A copy
+     never picks up later changes to the repo. A real link needs
+     `MSYS=winsymlinks:nativestrict` plus Windows symlink rights (Developer Mode
+     or an elevated shell); without those it fails with "Operation not
+     permitted". Check with `ls -l ~/.claude/skills/` after step 3: a copy
+     shows as a plain folder, a link shows `-> <repo>/.claude/skills/<name>`.
 
 ## What's deliberately NOT in this repo
 
 No `install.sh` — this file is the install script, meant to be handed to
 Claude Code (or read by a human) so each step gets checked before it runs
-rather than executed blind. No tmux plugin manager (TPM) or vim plugin manager
-either — `.tmux.conf` and `.vimrc` are both self-contained, nothing to bootstrap
-beyond tmux/vim themselves.
+rather than executed blind. No vim plugin manager either — `.vimrc` is
+self-contained. tmux does use TPM, but only for session persistence (gotcha 7),
+and `.tmux.conf` bootstraps it on its own, so there's no install step for it.
+No copy of the humanizer skill: step 5 clones it at a pinned tag, so there's one
+upstream to update from instead of a vendored copy that drifts.
