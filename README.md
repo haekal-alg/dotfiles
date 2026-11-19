@@ -2,7 +2,7 @@
 
 ## What this is
 
-My tmux, vim, Claude Code, GlazeWM and tacky-borders config, the stuff I actually use day to day. Used on WSL2 and macOS from the same files: the OS-specific clipboard handling lives in one helper script (`.tmux/clip.sh`) that picks the right tool at runtime, and per-machine tweaks go in an untracked `~/.tmux.local.conf`. Plain Linux should work once a clipboard tool (wl-clipboard, xclip or xsel) is installed, but isn't tested. Still not plug-and-drop: read `ONBOARDING.md`'s gotchas, or hand the install to an AI agent (see below).
+My tmux, vim, Claude Code, GlazeWM, Zebar and tacky-borders config, the stuff I actually use day to day. Used on WSL2 and macOS from the same files: the OS-specific clipboard handling lives in one helper script (`.tmux/clip.sh`) that picks the right tool at runtime, and per-machine tweaks go in an untracked `~/.tmux.local.conf`. Plain Linux should work once a clipboard tool (wl-clipboard, xclip or xsel) is installed, but isn't tested. Still not plug-and-drop: read `ONBOARDING.md`'s gotchas, or hand the install to an AI agent (see below).
 
 ## Install (AI-assisted)
 
@@ -35,12 +35,13 @@ The day-to-day setup this config sits in:
 - **[tacky-borders](https://github.com/lukeyou05/tacky-borders)** — customizable window border accents (color, gradient, radius) for Windows 10/11.
 - **[agent-yes](https://github.com/snomiao/agent-yes)** — runs AI coding agents (Claude, Codex, Gemini, ...) unattended: auto-answers prompts and auto-retries on rate limits.
 
-tmux, vim, GlazeWM and tacky-borders are configured here. Nothing else on that list has its config tracked in this repo.
+tmux, vim, GlazeWM, Zebar and tacky-borders are configured here. Nothing else on that list has its config tracked in this repo.
 
-The two Windows-side configs are **copies**, not symlinks: a symlink into `%USERPROFILE%` would store the Windows account name as its target in git (same reason `alacritty.toml` is ignored). They mirror their home-relative location, so restoring means copying them back by hand:
+The Windows-side configs are **copies**, not symlinks: a symlink into `%USERPROFILE%` would store the Windows account name as its target in git (same reason `alacritty.toml` is ignored). They mirror their home-relative location, so restoring means copying them back by hand:
 
 - `.glzr/glazewm/config.pr1392.yaml` → `%USERPROFILE%\.glzr\glazewm\`. Uses the fork's `animations` block, which stock GlazeWM doesn't know; start the fork with `glazewm start --config <that path>`. Paths in it use `%USERPROFILE%`, which `shell-exec` expands.
 - `.config/tacky-borders/config.yaml` → `%USERPROFILE%\.config\tacky-borders\`.
+- `.glzr/zebar/` → `%USERPROFILE%\.glzr\zebar\`: `settings.json` starts the `vitrine` widget pack (`vitrine/`), and `debug/zebar_logged.vbs` is the launcher GlazeWM's startup command runs. It starts Zebar hidden with its log written to a timestamped file in `debug/`; those logs aren't tracked and can grow large. The launcher points at Zebar's default install path, `C:\Program Files\glzr.io\Zebar\zebar.exe`.
 
 Edit the live files and copy them back here; nothing keeps the two in sync.
 
@@ -81,6 +82,13 @@ Edit the live files and copy them back here; nothing keeps the two in sync.
 **GlazeWM (`.glzr/glazewm/config.pr1392.yaml`)**
 - Horizontal workspace-switch slide, 400 ms, `cubic_bezier(0.2, 0.9, 0.3, 1.0)` (full speed from the first frame, long settle, no bounce); window move/resize/open/close animations off
 - Starts Zebar on launch; `Alt+,` renames the focused workspace through Zebar's inline input
+
+**Zebar (`.glzr/zebar/vitrine/`)**
+- Translucent top bar: workspace buttons on the left, date in the middle, status on the right
+- The focus highlight slides between workspace buttons on the same 400 ms curve as GlazeWM's workspace slide (jumps instead with Windows' reduce-motion setting on)
+- Inline workspace rename: double-click a button, or `Alt+,` in GlazeWM; Enter saves, Esc cancels
+- Right side: GlazeWM pause and binding-mode buttons, tiling-direction toggle, Bluetooth device with battery level (click to cycle devices), Wi-Fi network, volume with mute, battery with charging glyph
+- Bluetooth has no Zebar provider, so `vitrine/bluetooth.ps1` is polled through PowerShell; the script path is built from `%USERPROFILE%` at run time
 
 **tacky-borders (`.config/tacky-borders/config.yaml`)**
 - 3 px square blue focus border; unfocused windows get GlazeWM's own gray border instead

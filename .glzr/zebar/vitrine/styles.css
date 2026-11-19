@@ -1,0 +1,242 @@
+/**
+ * Import the Nerdfonts icon font.
+ * Ref https://www.nerdfonts.com/cheat-sheet for a cheatsheet of available Nerdfonts icons.
+ */
+@import 'https://www.nerdfonts.com/assets/css/webfont.css';
+
+:root {
+  --text-size: 12px;
+  --icon-size: 18px;
+
+  --text-color-light: rgba(0 0 0 / 95%);
+  --text-color-dark: rgba(255 255 255 / 95%);
+
+  --icon-color-light: rgba(255 255 255 / 60%);
+  --icon-color-dark: rgba(255 255 255 / 60%);
+
+  --background-color-light: rgba(0 0 0 / 25%);
+  --background-color-dark: rgba(0 0 0 / 25%);
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    color: var(--text-color-light);
+  }
+
+  i {
+    color: var(--icon-color-light);
+  }
+
+  #root {
+    background: var(--background-color-light);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: var(--text-color-dark);
+  }
+
+  i {
+    color: var(--icon-color-dark);
+  }
+
+  #root {
+    background: var(--background-color-dark);
+  }
+}
+
+i {
+  margin-right: 7px;
+  font-size: var(--icon-size);
+}
+
+body {
+  /* Inter as a stand-in for Apple's SF Pro (not licensed for use outside
+     Apple platforms). "Inter Variable" is the family name of the locally
+     installed InterVariable.ttf; "Inter" covers the static release.
+     Icons are unaffected -- the Nerdfonts webfont sets its own font-family
+     on the icon classes. */
+  font-family: "Inter Variable", "Inter", system-ui, sans-serif;
+  /* tnum: fixed-width digits so CPU/memory/clock values don't shift the
+     layout as they tick, which a proportional sans would otherwise do. */
+  font-feature-settings: "tnum";
+  /* 500, not the default 400: Inter at 12px under Windows ClearType renders
+     noticeably thinner than SF on macOS. Medium gets closer to the menu-bar
+     look. Any value 100-900 works since the variable font is installed. */
+  font-weight: 500;
+  font-size: var(--text-size);
+  overflow: hidden;
+}
+
+div,
+span,
+p {
+  cursor: default;
+  user-select: none;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+#root {
+  border-bottom: 1px solid rgb(255 255 255 / 5%);
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  height: 100%;
+  /* Was `1.5vw` -- relative to full monitor width, so on a wide/high-res
+     display (e.g. 3440px) that alone worked out to ~50px of dead space
+     on each edge. Fixed px keeps the edge gap the same regardless of
+     monitor size. */
+  padding: 4px 20px;
+}
+
+.left,
+.center,
+.right {
+  display: flex;
+  align-items: center;
+}
+
+.center {
+  justify-self: center;
+}
+
+.right {
+  justify-self: end;
+}
+
+/* `.right` is end-aligned as a whole (see above), so a trailing
+   margin-right on whichever element ends up last (from the shared 20px
+   spacing rule below) pushes the entire row away from the edge instead
+   of just separating it from a sibling that isn't there -- confirmed by
+   pixel-measuring the rendered bar: 30px gap on the right vs 10px on the
+   left, the extra 20px being exactly that rule's margin. `:last-child`
+   (not a specific class) so this stays correct regardless of which
+   provider ends up last as they're toggled on/off. */
+.right > :last-child {
+  margin-right: 0;
+}
+
+.logo,
+.binding-mode,
+.tiling-direction,
+.paused-button,
+.bluetooth,
+.network,
+.audio,
+.memory,
+.cpu,
+.battery {
+  margin-right: 20px;
+}
+
+.workspaces {
+  display: flex;
+  align-items: center;
+  /* Positioning context for .workspace-pill; button offsetLeft values are
+     measured relative to this box. */
+  position: relative;
+}
+
+.workspace {
+  background: rgb(255 255 255 / 5%);
+  margin-right: 4px;
+  padding: 4px 8px;
+  color: rgb(255 255 255 / 90%);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  /* Above .workspace-pill. */
+  position: relative;
+  z-index: 1;
+
+  &.displayed {
+    background: rgb(255 255 255 / 15%);
+  }
+
+  &:hover {
+    background: rgb(75 115 255 / 50%);
+  }
+
+  /* The focus blue comes from .workspace-pill sliding underneath, so the
+     focused button itself stays clear. Declared after :hover so hovering
+     the focused button doesn't stack a second blue on top of the pill. */
+  &.focused {
+    background: transparent;
+  }
+}
+
+/* Same blue the focused button used to paint itself. Position and width
+   are set inline from the focused button's measured box. */
+.workspace-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 6px;
+  background: rgb(75 115 255 / 50%);
+  pointer-events: none;
+
+  /* Same duration and curve as GlazeWM's workspace_switch slide, so the
+     bar and the screen move together. Only after the first placement
+     (see pillPlaced), so the pill doesn't fly in when the widget loads. */
+  &.placed {
+    transition:
+      transform 400ms cubic-bezier(0.2, 0.9, 0.3, 1),
+      width 400ms cubic-bezier(0.2, 0.9, 0.3, 1),
+      opacity 200ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-pill.placed {
+    transition: none;
+  }
+}
+
+/* Inline rename input swapped in for a .workspace button (double-click to
+   edit). Font/outline are reset since <input> doesn't inherit either by
+   default the way <button> does; background/padding/border/border-radius
+   already come from .workspace above. */
+.workspace.editing {
+  font: inherit;
+  color: inherit;
+  outline: none;
+  width: 12ch;
+}
+
+.binding-mode,
+.tiling-direction,
+.paused-button {
+  background: rgb(255 255 255 / 15%);
+  color: rgb(255 255 255 / 90%);
+  border-radius: 2px;
+  line-height: 1;
+  padding: 4px 8px;
+  border: 0;
+  cursor: pointer;
+}
+
+.binding-mode {
+  margin-right: 4px;
+}
+
+.cpu .high-usage {
+  color: #900029;
+}
+
+.bluetooth {
+  cursor: pointer;
+}
+
+.bluetooth.inactive {
+  opacity: 45%;
+}

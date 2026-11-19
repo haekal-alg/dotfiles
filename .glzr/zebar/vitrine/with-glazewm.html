@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Custom styles. -->
+    <link rel="stylesheet" type="text/css" href="./styles.css" />
+
+    <!-- Allows React to be run buildless via "text/babel" script below. -->
+    <script
+      src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"
+      integrity="sha256-aS0B0wnsaDByLfE16h4MDCP1fQFccysd1YWOcV+gbBo="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+      import React, {
+        useState,
+        useEffect,
+        useLayoutEffect,
+        useRef,
+      } from 'https://esm.sh/react@18?dev';
+      import { createRoot } from 'https://esm.sh/react-dom@18/client?dev';
+      // Pinned to 3.3 rather than the starter's 3.0 because the audio device's
+      // `isMuted` field only exists in the 3.3.x typings, and a volume glyph that
+      // cannot show mute is worse than no glyph. 3.3 also matches the installed
+      // Zebar app version, so the JS API and the host stay in step.
+      import * as zebar from 'https://esm.sh/zebar@3.3';
+
+      const providers = zebar.createProviderGroup({
+        network: { type: 'network' },
+        glazewm: { type: 'glazewm' },
+        audio: { type: 'audio' },
+        date: { type: 'date', formatting: 'EEE d MMM t' },
+        // Default refreshInterval is 60s (zebar client-api's Zod schema) --
+        // too slow for a plug/unplug status icon to feel live, so it's
+        // shortened here. Battery state is a cheap OS read, not worth
+        // polling less often just to save the wakeup.
+        battery: { type: 'battery', refreshInterval: 5000 },
+      });
+
+      // Bluetooth has no Zebar provider, so it is polled by shelling out to a
+      // PowerShell script instead. The script used to cost ~5-12s per run (WMI
+      // cmdlet overhead -- see bluetooth.ps1), which is why this used to be a
+      // 60s interval; it's now down to ~2-3s (Get-CimInstance + Invoke-CimMethod
+      // instead of Get-PnpDevice/Get-PnpDeviceProperty), so polling can run much
+      // closer to real time. This is a gap AFTER each poll finishes, not a fixed
+      // wall-clock interval -- see the self-rescheduling loop below -- so a slow
+      // run never overlaps with the next one.
+      const BLUETOOTH_POLL_GAP_MS = 1_000;
+
+      // PowerShell builds the script path from %USERPROFILE% at run time, so no
+      // Windows account name is hard-coded here. That needs -Command: -File takes
+      // its path literally. Absolute rather than relative because the widget's
+      // working directory is not guaranteed. The args have to match
+      // `privileges.shellCommands[].argsRegex` in zpack.json exactly -- if this
+      // command changes, that regex must change with it.
+      const BLUETOOTH_COMMAND =
+        "& (Join-Path $env:USERPROFILE '.glzr\\zebar\\vitrine\\bluetooth.ps1')";
+
+      // GlazeWM's IPC command parser does a naive whitespace split with no
+      // quote-awareness (packages/wm/src/ipc_server.rs: `message.split_whitespace()`),
+      // so a display name containing a space can't be sent as one token --
+      // it would get torn into multiple args and rejected. Spaces are
+      // substituted with underscores on the wire and swapped back for
+      // display; the tradeoff is a name with a literal underscore renders
+      // with a space instead, acceptable for short workspace labels.
+      function encodeWorkspaceName(name) {
+        return name.replace(/\s+/g, '_');
+      }
+
+      function decodeWorkspaceName(name) {
+        return name.replace(/_/g, ' ');
+      }
+
+      createRoot(document.getElementById('root')).render(<App />);
+
+      function App() {
+        const [output, setOutput] = useState(providers.outputMap);
+        const [bluetooth, setBluetooth] = useState(null);
+        // Which device is shown next to the bluetooth glyph -- clicking cycles
+        // to the next one. Kept by NAME, not array index: bluetooth.ps1 sorts
+        // connected devices first on every poll, so a device's position can
+        // change the instant its connected state flips (confirmed this made a
+        // real disconnect look like nothing happened -- the index kept pointing
+        // at whatever now sat in that slot, not the device the user clicked
+        // to). null means "whatever sorts first", i.e. the default view.
+        const [selectedBluetoothName, setSelectedBluetoothName] = useState(null);
+        // Name of the workspace currently being renamed inline (null when
+        // no rename is in progress), and the input's draft text.
+        const [editingWorkspace, setEditingWorkspace] = useState(null);
+        const [editValue, setEditValue] = useState('');
+
+        // Sliding focus highlight: one pill behind the workspace buttons,
+        // moved to the focused button's measured box, instead of each
+        // button switching its own background (which can only jump or
+        // fade, not travel). Buttons register here by workspace name.
+        const workspaceButtons = useRef(new Map());
+        // null = no focused button on this bar (focus is on another
+        // monitor, or the focused workspace is being renamed): pill fades.
+        const [pillBox, setPillBox] = useState(null);
+        // The first placement must not animate, or the pill would slide in
+        // from the bar's left edge when the widget loads.
+        const [pillPlaced, setPillPlaced] = useState(false);
+
+        // Re-measured after every render rather than on specific deps: a
+        // button's width changes with renames, the workspace list can
+        // gain or lose buttons, and fonts can finish loading late. It's
+        // two layout reads, and state is only set when the box moved, so
+        // this can't loop.
+        useLayoutEffect(() => {
+          const focused = output.glazewm?.currentWorkspaces.find(
+            workspace => workspace.hasFocus,
+          );
+          const el = focused && workspaceButtons.current.get(focused.name);
+          const box = el ? { x: el.offsetLeft, width: el.offsetWidth } : null;
+
+          setPillBox(prev =>
+            prev?.x === box?.x && prev?.width === box?.width ? prev : box,
+          );
+        });
+
+        useEffect(() => {
+          if (pillBox && !pillPlaced) {
+            // Enable the transition only after the first placement has been
+            // painted at its spot.
+            requestAnimationFrame(() => setPillPlaced(true));
+          }
+        }, [pillBox, pillPlaced]);
+
+        // Empty submissions are a no-op rather than setting displayName to
+        // "" -- an explicit empty string isn't falsy the same way `null` is
+        // when rendering, so it would render as a permanently blank label
+        // instead of falling back to the bare workspace number.
+        function commitWorkspaceRename(workspaceName, rawValue) {
+          const trimmed = rawValue.trim();
+          if (!trimmed) return;
+
+          output.glazewm.runCommand(
+            `update-workspace-config --workspace ${workspaceName} --display-name ${encodeWorkspaceName(trimmed)}`,
+          );
+        }
+
+        useEffect(() => {
+          providers.onOutput(() => setOutput(providers.outputMap));
+        }, []);
+
+        // Reacts to the 'workspace-rename' binding mode (toggled by the
+        // alt+oem_comma keybinding in config.yaml) instead of a raw
+        // keypress -- GlazeWM keybindings can only run WM/shell commands,
+        // they can't reach into this window's DOM directly, so the mode
+        // itself is the signal, pushed over the same websocket this
+        // provider already uses. It's disabled again immediately; it's a
+        // one-shot trigger, not an actual modal keymap to escape out of.
+        useEffect(() => {
+          const isRenaming = output.glazewm?.bindingModes.some(
+            mode => mode.name === 'workspace-rename',
+          );
+
+          if (isRenaming) {
+            output.glazewm.runCommand(
+              'wm-disable-binding-mode --name workspace-rename',
+            );
+
+            const workspace = output.glazewm.focusedWorkspace;
+            setEditValue(
+              workspace.displayName
+                ? decodeWorkspaceName(workspace.displayName)
+                : '',
+            );
+            setEditingWorkspace(workspace.name);
+          }
+        }, [output.glazewm?.bindingModes]);
+
+        useEffect(() => {
+          let cancelled = false;
+          let timeoutId = null;
+
+          async function pollBluetooth() {
+            try {
+              const { stdout } = await zebar.shellExec('powershell', [
+                '-NoProfile',
+                '-ExecutionPolicy',
+                'Bypass',
+                '-Command',
+                BLUETOOTH_COMMAND,
+              ]);
+
+              const [radioStr, countStr, namesStr, batteriesStr, connectedStr] =
+                stdout.trim().split('|');
+              // Only the first two fields are numeric -- the rest can't go
+              // through the same Number() mapping the old two-field parse
+              // used, or every value would come out NaN.
+              const radio = Number(radioStr);
+              // Count of devices actually connected right now, not every paired
+              // device (see bluetooth.ps1 for the per-device-type detection).
+              // Drives the icon and dimming below.
+              const count = Number(countStr);
+              const names = namesStr ? namesStr.split(';') : [];
+              // Index-aligned with names. A device can be connected with an
+              // empty battery slot (e.g. a headset with no Windows-visible
+              // battery reporting) -- battery presence alone isn't "connected",
+              // check `connected` for that.
+              const batteries = batteriesStr ? batteriesStr.split(';') : [];
+              const connected = connectedStr ? connectedStr.split(';') : [];
+
+              if (!cancelled) {
+                setBluetooth({ radio, count, names, batteries, connected });
+              }
+            } catch {
+              // A missing shell privilege or a failed spawn should hide the glyph,
+              // not blank the whole bar -- React would unmount everything on a throw
+              // inside render, so failures are swallowed into a null state here.
+              if (!cancelled) {
+                setBluetooth(null);
+              }
+            } finally {
+              // Self-rescheduling instead of setInterval on purpose: the script's
+              // runtime varies (a few seconds, occasionally more under system
+              // load), and a fixed interval shorter than that would let polls
+              // stack up as concurrent PowerShell spawns. Waiting for each run to
+              // finish before scheduling the next guarantees only one is ever in
+              // flight, however long an individual run takes.
+              if (!cancelled) {
+                timeoutId = setTimeout(pollBluetooth, BLUETOOTH_POLL_GAP_MS);
+              }
+            }
+          }
+
+          pollBluetooth();
+
+          return () => {
+            cancelled = true;
+            clearTimeout(timeoutId);
+          };
+        }, []);
+
+        // Get icon to show for current network status.
+        function getNetworkIcon(networkOutput) {
+          switch (networkOutput.defaultInterface?.type) {
+            case 'ethernet':
+              return <i className="nf nf-md-ethernet_cable"></i>;
+            case 'proprietary_virtual':
+              return <i className="nf nf-md-shield_lock_outline"></i>;
+            case 'wifi':
+              if (networkOutput.defaultGateway?.signalStrength >= 80) {
+                return <i className="nf nf-md-wifi_strength_4"></i>;
+              } else if (
+                networkOutput.defaultGateway?.signalStrength >= 65
+              ) {
+                return <i className="nf nf-md-wifi_strength_3"></i>;
+              } else if (
+                networkOutput.defaultGateway?.signalStrength >= 40
+              ) {
+                return <i className="nf nf-md-wifi_strength_2"></i>;
+              } else if (
+                networkOutput.defaultGateway?.signalStrength >= 25
+              ) {
+                return <i className="nf nf-md-wifi_strength_1"></i>;
+              } else {
+                return <i className="nf nf-md-wifi_strength_outline"></i>;
+              }
+            default:
+              return (
+                <i className="nf nf-md-wifi_strength_off_outline"></i>
+              );
+          }
+        }
+
+        // `isCharging` (zebar's Rust backend: `battery.state() ==
+        // State::Charging`) only tracks "actively gaining charge" -- a
+        // plugged-in battery leaves that state once it tops out ('full'),
+        // or, on hardware with a charge-limit feature, once charging is
+        // paused at the limit ('paused' -- this state is unreachable on
+        // Windows, see below, but real on the crate's Linux/macOS
+        // backends, so it's kept here for portability).
+        //
+        // On Windows specifically -- confirmed by instrumenting this
+        // widget with a temporary debug readout of the raw state string --
+        // a fully-charged, plugged-in battery reports 'discharging', not
+        // 'full'. Traced to starship_battery's Windows backend
+        // (platform/windows/ffi/ioctl/status.rs): Windows' BATTERY_STATUS
+        // can set both the DISCHARGING and POWER_ON_LINE bits at once when
+        // topped out, and that backend's state() checks is_discharging()
+        // before is_power_on_line(), so 'discharging' wins and the
+        // AC-connected signal is lost. zebar's BatteryOutput only exposes
+        // the already-collapsed state string, not the raw bits, so there's
+        // no clean way to route around this -- it's patched below as a
+        // chargePercent>=100 special case instead of a real state check.
+        // Known tradeoff: briefly still shows as plugged in for one tick
+        // right after actually unplugging at 100%, until chargePercent
+        // drops on the next refresh and this stops matching.
+        function isPluggedIn(batteryOutput) {
+          return (
+            batteryOutput.state === 'charging' ||
+            batteryOutput.state === 'full' ||
+            batteryOutput.state === 'paused' ||
+            (batteryOutput.state === 'discharging' &&
+              batteryOutput.chargePercent >= 100)
+          );
+        }
+
+        // Get icon to show for how much of the battery is charged. While
+        // plugged in, use MDI's battery_charging_* glyphs (bolt baked into
+        // the shape) instead of the plain tiers below. Previously a plain
+        // tier icon was paired with a separate standalone lightning-bolt
+        // icon in the render below, specifically to work around the bolt
+        // being baked subtly into battery_charging_* -- now that we render
+        // the charging glyph itself, that standalone bolt has been dropped
+        // from the render below too, since keeping it would just duplicate
+        // the one already baked into this glyph.
+        // Charging tiers snap to the nearest available 10% glyph (MDI has
+        // one every 10%, unlike the plain set below which only uses a
+        // handful of coarser buckets by choice); 'full' and 'paused' pin to
+        // the 100% glyph even if chargePercent reads a hair under 100 from
+        // sensor rounding.
+        function getBatteryIcon(batteryOutput) {
+          if (isPluggedIn(batteryOutput)) {
+            const tier =
+              batteryOutput.state === 'full' || batteryOutput.state === 'paused'
+                ? 100
+                : Math.min(
+                    100,
+                    Math.max(10, Math.round(batteryOutput.chargePercent / 10) * 10),
+                  );
+
+            return <i className={`nf nf-md-battery_charging_${tier}`}></i>;
+          }
+
+          const tier =
+            batteryOutput.chargePercent > 90 ? '90' :
+            batteryOutput.chargePercent > 70 ? '70' :
+            batteryOutput.chargePercent > 40 ? '40' :
+            batteryOutput.chargePercent > 20 ? '20' :
+            '10';
+
+          return <i className={`nf nf-md-battery_${tier}`}></i>;
+        }
+
+        // Get icon to show for the default playback device's volume. Mute is checked
+        // before the level, since a muted device keeps its volume value.
+        function getVolumeIcon(audioOutput) {
+          const device = audioOutput.defaultPlaybackDevice;
+
+          if (!device || device.isMuted) {
+            return <i className="nf nf-md-volume_off"></i>;
+          }
+          if (device.volume > 60) {
+            return <i className="nf nf-md-volume_high"></i>;
+          }
+          if (device.volume > 20) {
+            return <i className="nf nf-md-volume_medium"></i>;
+          }
+          if (device.volume > 0) {
+            return <i className="nf nf-md-volume_low"></i>;
+          }
+          return <i className="nf nf-md-volume_mute"></i>;
+        }
+
+        // Get icon to show for bluetooth. The probe cannot tell "radio off" apart
+        // from "radio on, nothing paired-and-connected" (see bluetooth.ps1), so a
+        // count of 0 is rendered dimmed rather than as an explicit off state.
+        function getBluetoothIcon(bluetoothState) {
+          if (!bluetoothState.radio) {
+            return <i className="nf nf-md-bluetooth_off"></i>;
+          }
+          if (bluetoothState.count > 0) {
+            return <i className="nf nf-md-bluetooth_connect"></i>;
+          }
+          return <i className="nf nf-md-bluetooth"></i>;
+        }
+
+        // Resolves the selected-by-name device back to its current array
+        // position (see selectedBluetoothName above for why this can't just be
+        // a stored index). Falls back to 0 -- the connected-first slot -- when
+        // nothing's selected yet or the selected device is no longer present.
+        function currentBluetoothIndex(bluetoothState, selectedName) {
+          if (selectedName) {
+            const idx = bluetoothState.names.indexOf(selectedName);
+            if (idx !== -1) return idx;
+          }
+          return 0;
+        }
+
+        // Label for the currently selected device. `connected` (not battery
+        // presence) is the source of truth for "is this actually linked" --
+        // some connected devices (e.g. headsets without Windows-visible
+        // battery reporting) have no battery reading at all, see bluetooth.ps1.
+        function getBluetoothLabel(bluetoothState, index) {
+          const name = bluetoothState.names[index];
+          if (bluetoothState.connected[index] !== '1') {
+            return `${name} [disconnected]`;
+          }
+          const battery = bluetoothState.batteries[index];
+          return battery ? `${name} [${battery}%]` : `${name} [connected]`;
+        }
+
+        return (
+          <div className="app">
+            <div className="left">
+              <i className="logo nf nf-fa-windows"></i>
+              {output.glazewm && (
+                <div className="workspaces">
+                  <span
+                    className={`workspace-pill ${pillPlaced ? 'placed' : ''}`}
+                    style={{
+                      // Keeps its last box while hidden, so it fades out
+                      // in place rather than collapsing to 0.
+                      transform: `translateX(${pillBox?.x ?? 0}px)`,
+                      width: pillBox?.width ?? 0,
+                      opacity: pillBox ? 1 : 0,
+                    }}
+                  />
+                  {output.glazewm.currentWorkspaces.map(workspace =>
+                    editingWorkspace === workspace.name ? (
+                      <input
+                        className="workspace editing"
+                        key={workspace.name}
+                        autoFocus
+                        value={editValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        onFocus={e => e.target.select()}
+                        onBlur={() => setEditingWorkspace(null)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            commitWorkspaceRename(
+                              workspace.name,
+                              editValue,
+                            );
+                            setEditingWorkspace(null);
+                          } else if (e.key === 'Escape') {
+                            setEditingWorkspace(null);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <button
+                        ref={el => {
+                          if (el) workspaceButtons.current.set(workspace.name, el);
+                          else workspaceButtons.current.delete(workspace.name);
+                        }}
+                        className={`workspace ${workspace.hasFocus && 'focused'} ${workspace.isDisplayed && 'displayed'}`}
+                        onClick={() =>
+                          output.glazewm.runCommand(
+                            `focus --workspace ${workspace.name}`,
+                          )
+                        }
+                        onDoubleClick={() => {
+                          setEditValue(
+                            workspace.displayName
+                              ? decodeWorkspaceName(workspace.displayName)
+                              : '',
+                          );
+                          setEditingWorkspace(workspace.name);
+                        }}
+                        key={workspace.name}
+                      >
+                        {workspace.displayName
+                          ? `${workspace.name}: ${decodeWorkspaceName(workspace.displayName)}`
+                          : workspace.name}
+                      </button>
+                    ),
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="center">{output.date?.formatted}</div>
+
+            <div className="right">
+              {output.glazewm && (
+                <>
+                  {output.glazewm.isPaused && (
+                    <button
+                      className="paused-button"
+                      onClick={() =>
+                        output.glazewm.runCommand('wm-toggle-pause')
+                      }
+                    >
+                      PAUSED
+                    </button>
+                  )}
+                  {output.glazewm.bindingModes
+                    // 'workspace-rename' is an internal one-shot signal (see
+                    // the useEffect above), not a real modal keymap the user
+                    // toggles -- it's gone again within ~1s regardless, but
+                    // showing it here as a clickable mode button is just
+                    // confusing noise since there's nothing to actually
+                    // "disable" by the time anyone could click it.
+                    .filter(
+                      bindingMode => bindingMode.name !== 'workspace-rename',
+                    )
+                    .map(bindingMode => (
+                    <button
+                      className="binding-mode"
+                      key={bindingMode.name}
+                      onClick={() =>
+                        output.glazewm.runCommand(
+                          `wm-disable-binding-mode --name ${bindingMode.name}`,
+                        )
+                      }
+                    >
+                      {bindingMode.displayName ?? bindingMode.name}
+                    </button>
+                  ))}
+
+                  <button
+                    className={`tiling-direction nf ${
+                      output.glazewm.tilingDirection === 'horizontal'
+                        ? 'nf-md-swap_horizontal'
+                        : 'nf-md-swap_vertical'
+                    }`}
+                    onClick={() =>
+                      output.glazewm.runCommand('toggle-tiling-direction')
+                    }
+                  ></button>
+                </>
+              )}
+
+              {bluetooth && (
+                <div
+                  className={`bluetooth ${bluetooth.count > 0 ? '' : 'inactive'}`}
+                  onClick={() => {
+                    const idx = currentBluetoothIndex(
+                      bluetooth,
+                      selectedBluetoothName,
+                    );
+                    const nextIdx = bluetooth.names.length
+                      ? (idx + 1) % bluetooth.names.length
+                      : 0;
+                    setSelectedBluetoothName(bluetooth.names[nextIdx] ?? null);
+                  }}
+                >
+                  {getBluetoothIcon(bluetooth)}
+                  {getBluetoothLabel(
+                    bluetooth,
+                    currentBluetoothIndex(bluetooth, selectedBluetoothName),
+                  )}
+                </div>
+              )}
+
+              {output.network && (
+                <div className="network">
+                  {getNetworkIcon(output.network)}
+                  {output.network.defaultGateway?.ssid}
+                </div>
+              )}
+
+              {output.audio && (
+                <div className="audio">
+                  {getVolumeIcon(output.audio)}
+                  {output.audio.defaultPlaybackDevice &&
+                    Math.round(output.audio.defaultPlaybackDevice.volume) + '%'}
+                </div>
+              )}
+
+              {output.battery && (
+                <div
+                  className={`battery ${isPluggedIn(output.battery) ? 'charging' : ''}`}
+                >
+                  {getBatteryIcon(output.battery)}
+                  {Math.round(output.battery.chargePercent)}%
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+    </script>
+  </body>
+</html>
