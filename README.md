@@ -2,7 +2,7 @@
 
 ## What this is
 
-My tmux, vim, and Claude Code config, the stuff I actually use day to day. Used on WSL2 and macOS from the same files: the OS-specific clipboard handling lives in one helper script (`.tmux/clip.sh`) that picks the right tool at runtime, and per-machine tweaks go in an untracked `~/.tmux.local.conf`. Plain Linux should work once a clipboard tool (wl-clipboard, xclip or xsel) is installed, but isn't tested. Still not plug-and-drop: read `ONBOARDING.md`'s gotchas, or hand the install to an AI agent (see below).
+My tmux, vim, Claude Code, GlazeWM and tacky-borders config, the stuff I actually use day to day. Used on WSL2 and macOS from the same files: the OS-specific clipboard handling lives in one helper script (`.tmux/clip.sh`) that picks the right tool at runtime, and per-machine tweaks go in an untracked `~/.tmux.local.conf`. Plain Linux should work once a clipboard tool (wl-clipboard, xclip or xsel) is installed, but isn't tested. Still not plug-and-drop: read `ONBOARDING.md`'s gotchas, or hand the install to an AI agent (see below).
 
 ## Install (AI-assisted)
 
@@ -30,12 +30,19 @@ The day-to-day setup this config sits in:
 - **[tmux](https://github.com/tmux/tmux)** — terminal multiplexer. `.tmux.conf` here is written against **3.7b**; a few options it uses don't exist in the 3.2a that Ubuntu's apt still ships.
 - **[Neovim](https://github.com/neovim/neovim)** — editor. It reads the `.vimrc` in this repo via a one-line `~/.config/nvim/init.lua` shim (`vim.cmd.source(vim.fn.expand("~/.vimrc"))`). That shim isn't tracked here, so create it yourself if you want the vim config to apply under Neovim.
 - **[Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh)** — zsh framework. The login shell is zsh, so the shell-side pieces referenced below (PATH ordering, the tmux autostart, the Windows PATH injection) live in `~/.zshrc` rather than `~/.bashrc`.
-- **[GlazeWM](https://github.com/glzr-io/glazewm)** — i3-inspired tiling window manager for Windows.
+- **[GlazeWM](https://github.com/glzr-io/glazewm)** — i3-inspired tiling window manager for Windows. I run my own fork, [haekal-alg/glazewm](https://github.com/haekal-alg/glazewm) (`animations` branch), which adds macOS-style workspace-switch slide animations on top of the unmerged upstream PR #1392.
 - **[Zebar](https://github.com/glzr-io/zebar)** — customizable, cross-platform status bar/widget tool, from the same team as GlazeWM.
 - **[tacky-borders](https://github.com/lukeyou05/tacky-borders)** — customizable window border accents (color, gradient, radius) for Windows 10/11.
 - **[agent-yes](https://github.com/snomiao/agent-yes)** — runs AI coding agents (Claude, Codex, Gemini, ...) unattended: auto-answers prompts and auto-retries on rate limits.
 
-Only tmux and vim are configured here. Nothing else on that list has its config tracked in this repo.
+tmux, vim, GlazeWM and tacky-borders are configured here. Nothing else on that list has its config tracked in this repo.
+
+The two Windows-side configs are **copies**, not symlinks: a symlink into `%USERPROFILE%` would store the Windows account name as its target in git (same reason `alacritty.toml` is ignored). They mirror their home-relative location, so restoring means copying them back by hand:
+
+- `.glzr/glazewm/config.pr1392.yaml` → `%USERPROFILE%\.glzr\glazewm\`. Uses the fork's `animations` block, which stock GlazeWM doesn't know; start the fork with `glazewm start --config <that path>`. Paths in it use `%USERPROFILE%`, which `shell-exec` expands.
+- `.config/tacky-borders/config.yaml` → `%USERPROFILE%\.config\tacky-borders\`.
+
+Edit the live files and copy them back here; nothing keeps the two in sync.
 
 ## What this config can do
 
@@ -70,6 +77,15 @@ Only tmux and vim are configured here. Nothing else on that list has its config 
 - `talk-to-me-im-human`: rewrites a technical answer for a PM; loads the [humanizer](https://github.com/blader/humanizer) skill, which `/install` clones at a pinned tag
 - `install`: the installer itself, only useful inside this repo
 - All of them load when Claude Code runs inside this repo. `/install` links every one except `install` itself into `~/.claude/skills/`, so they work everywhere
+
+**GlazeWM (`.glzr/glazewm/config.pr1392.yaml`)**
+- Horizontal workspace-switch slide, 400 ms, `cubic_bezier(0.2, 0.9, 0.3, 1.0)` (full speed from the first frame, long settle, no bounce); window move/resize/open/close animations off
+- Starts Zebar on launch; `Alt+,` renames the focused workspace through Zebar's inline input
+
+**tacky-borders (`.config/tacky-borders/config.yaml`)**
+- 3 px square blue focus border; unfocused windows get GlazeWM's own gray border instead
+- 200 ms fade when focus moves between windows
+- Forced on for Alacritty, which has no native frame with `decorations = "None"`
 
 **Other**
 - `.gitattributes` forces LF line endings, since the repo moves between Windows and Linux
