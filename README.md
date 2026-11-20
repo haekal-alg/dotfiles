@@ -81,7 +81,8 @@ Edit the live files and copy them back here; nothing keeps the two in sync.
 
 **GlazeWM (`.glzr/glazewm/config.pr1392.yaml`)**
 - Horizontal workspace-switch slide, 400 ms, `cubic_bezier(0.2, 0.9, 0.3, 1.0)` (full speed from the first frame, long settle, no bounce)
-- Moving a window (`Alt+Shift+arrow`) slides it, and the neighbours that resize to fill the gap slide with it: 150 ms ease-in-out. Window open/close animations off
+- Moving a window (`Alt+Shift+arrow`) slides it, and the neighbours that resize to fill the gap slide with it: 150 ms ease-in-out
+- New tiled windows slide in from the right (150 ms); `Alt+Shift+Q` fades the window out. Windows closed any other way (their own X, Ctrl+W) just vanish, since they're gone before GlazeWM hears about it
 - Starts Zebar on launch; `Alt+,` renames the focused workspace through Zebar's inline input
 
 **Zebar (`.glzr/zebar/vitrine/`)**

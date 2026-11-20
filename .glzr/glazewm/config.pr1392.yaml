@@ -386,7 +386,20 @@ animations:
     duration_ms: 150
     easing: "cubic_bezier(0.42, 0.0, 0.58, 1.0)"
     threshold_px: 10
+  # New tiled windows slide in from the right. Floating windows and popups
+  # are never animated. Values are the PR's defaults, written out.
   window_open:
-    enabled: false
+    enabled: true
+    duration_ms: 150
+    easing: "cubic_bezier(0.16, 1.0, 0.3, 1.0)"
+    style: "slide_right"
+    opacity_from: 1.0
+  # Fade out in place ("none" = no slide; opacity_to does the fade). Only
+  # runs for GlazeWM's own close (Alt+Shift+Q): a window closed by its own
+  # X button or Ctrl+W is already gone before GlazeWM hears about it.
   window_close:
-    enabled: false
+    enabled: true
+    duration_ms: 150
+    easing: "cubic_bezier(0.32, 0.0, 0.67, 0.0)"
+    style: "none"
+    opacity_to: 0.0
