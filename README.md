@@ -80,7 +80,8 @@ Edit the live files and copy them back here; nothing keeps the two in sync.
 - All of them load when Claude Code runs inside this repo. `/install` links every one except `install` itself into `~/.claude/skills/`, so they work everywhere
 
 **GlazeWM (`.glzr/glazewm/config.pr1392.yaml`)**
-- Horizontal workspace-switch slide, 400 ms, `cubic_bezier(0.2, 0.9, 0.3, 1.0)` (full speed from the first frame, long settle, no bounce); window move/resize/open/close animations off
+- Horizontal workspace-switch slide, 400 ms, `cubic_bezier(0.2, 0.9, 0.3, 1.0)` (full speed from the first frame, long settle, no bounce)
+- Moving a window (`Alt+Shift+arrow`) slides it, and the neighbours that resize to fill the gap slide with it: 150 ms ease-in-out. Window open/close animations off
 - Starts Zebar on launch; `Alt+,` renames the focused workspace through Zebar's inline input
 
 **Zebar (`.glzr/zebar/vitrine/`)**

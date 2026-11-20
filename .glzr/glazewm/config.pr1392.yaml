@@ -372,10 +372,20 @@ animations:
     opacity_outgoing: 1.0
     opacity_incoming: 1.0
     zoom_factor: 0.0
+  # Alt+Shift+arrow moves: a stand-in slides, the real window jumps once.
+  # Resize is on too: neighbours that grow/shrink to fill the gap use it,
+  # and a move in the same relayout follows its timing so edges stay joined.
+  # Values are the PR's defaults, written out.
   window_move:
-    enabled: false
+    enabled: true
+    duration_ms: 150
+    easing: "cubic_bezier(0.42, 0.0, 0.58, 1.0)"
+    threshold_px: 10
   window_resize:
-    enabled: false
+    enabled: true
+    duration_ms: 150
+    easing: "cubic_bezier(0.42, 0.0, 0.58, 1.0)"
+    threshold_px: 10
   window_open:
     enabled: false
   window_close:
