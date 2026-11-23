@@ -363,9 +363,10 @@ animations:
   # Ease-out only: moves at full speed from the first frame and decelerates
   # long, no overshoot. (0.4, 0.0, 0.2, 1.0) eased in first and covered only
   # ~3% of the travel in the first 40 ms, which read as input lag.
+  # 300 ms: at 400 the long settle made switches feel heavy.
   workspace_switch:
     enabled: true
-    duration_ms: 400
+    duration_ms: 300
     easing: "cubic_bezier(0.2, 0.9, 0.3, 1.0)"
     style: "slide"
     direction: "horizontal"
@@ -381,11 +382,15 @@ animations:
     duration_ms: 150
     easing: "cubic_bezier(0.42, 0.0, 0.58, 1.0)"
     threshold_px: 10
+  # threshold_px is the summed change of x, y, width and height. 300 skips
+  # the alt+u/alt+p 2% nudges (~70-140 px), which each cost a hide/stand-in/
+  # resize cycle of ~300-400 ms and piled up on repeated presses, while
+  # neighbours filling a moved window's gap (800+ px) still animate.
   window_resize:
     enabled: true
     duration_ms: 150
     easing: "cubic_bezier(0.42, 0.0, 0.58, 1.0)"
-    threshold_px: 10
+    threshold_px: 300
   # New tiled windows slide in from the right. Floating windows and popups
   # are never animated. Values are the PR's defaults, written out.
   window_open:

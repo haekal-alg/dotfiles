@@ -39,7 +39,7 @@ tmux, vim, GlazeWM, Zebar and tacky-borders are configured here. Nothing else on
 
 The Windows-side configs are **copies**, not symlinks: a symlink into `%USERPROFILE%` would store the Windows account name as its target in git (same reason `alacritty.toml` is ignored). They mirror their home-relative location, so restoring means copying them back by hand:
 
-- `.glzr/glazewm/config.pr1392.yaml` → `%USERPROFILE%\.glzr\glazewm\`. Uses the fork's `animations` block, which stock GlazeWM doesn't know; start the fork with `glazewm start --config <that path>`. Paths in it use `%USERPROFILE%`, which `shell-exec` expands.
+- `.glzr/glazewm/config.pr1392.yaml` → `%USERPROFILE%\.glzr\glazewm\`. Uses the fork's `animations` block, which stock GlazeWM doesn't know; start the fork with `glazewm start --config <that path>`, or set the user environment variable `GLAZEWM_CONFIG_PATH` to it so every launch without `--config` picks it up. Paths in it use `%USERPROFILE%`, which `shell-exec` expands.
 - `.config/tacky-borders/config.yaml` → `%USERPROFILE%\.config\tacky-borders\`.
 - `.glzr/zebar/` → `%USERPROFILE%\.glzr\zebar\`: `settings.json` starts the `vitrine` widget pack (`vitrine/`), and `debug/zebar_logged.vbs` is the launcher GlazeWM's startup command runs. It starts Zebar hidden with its log written to a timestamped file in `debug/`; those logs aren't tracked and can grow large. The launcher points at Zebar's default install path, `C:\Program Files\glzr.io\Zebar\zebar.exe`.
 
@@ -80,14 +80,15 @@ Edit the live files and copy them back here; nothing keeps the two in sync.
 - All of them load when Claude Code runs inside this repo. `/install` links every one except `install` itself into `~/.claude/skills/`, so they work everywhere
 
 **GlazeWM (`.glzr/glazewm/config.pr1392.yaml`)**
-- Horizontal workspace-switch slide, 400 ms, `cubic_bezier(0.2, 0.9, 0.3, 1.0)` (full speed from the first frame, long settle, no bounce)
+- Horizontal workspace-switch slide, 300 ms, `cubic_bezier(0.2, 0.9, 0.3, 1.0)` (full speed from the first frame, short settle, no bounce)
 - Moving a window (`Alt+Shift+arrow`) slides it, and the neighbours that resize to fill the gap slide with it: 150 ms ease-in-out
+- Small resizes (`Alt+U` / `Alt+P`, 2% steps) are instant: only resizes above 300 px of total change animate, since animating each nudge made held-down resizing lag
 - New tiled windows slide in from the right (150 ms); `Alt+Shift+Q` fades the window out. Windows closed any other way (their own X, Ctrl+W) just vanish, since they're gone before GlazeWM hears about it
 - Starts Zebar on launch; `Alt+,` renames the focused workspace through Zebar's inline input
 
 **Zebar (`.glzr/zebar/vitrine/`)**
 - Translucent top bar: workspace buttons on the left, date in the middle, status on the right
-- The focus highlight slides between workspace buttons on the same 400 ms curve as GlazeWM's workspace slide (jumps instead with Windows' reduce-motion setting on)
+- The focus highlight slides between workspace buttons on the same curve as GlazeWM's workspace slide, at 400 ms (jumps instead with Windows' reduce-motion setting on)
 - Inline workspace rename: double-click a button, or `Alt+,` in GlazeWM; Enter saves, Esc cancels
 - Right side: GlazeWM pause and binding-mode buttons, tiling-direction toggle, Bluetooth device with battery level (click to cycle devices), Wi-Fi network, volume with mute, battery with charging glyph
 - Bluetooth has no Zebar provider, so `vitrine/bluetooth.ps1` is polled through PowerShell; the script path is built from `%USERPROFILE%` at run time
